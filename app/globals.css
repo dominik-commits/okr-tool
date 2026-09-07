@@ -17,6 +17,14 @@
     --biz:#8B79D9;
     --proj:#6FA870;
     --proj-soft:rgba(111,168,112,0.22);
+    --l1:#D9463A;
+    --l1-soft:rgba(217,70,58,0.20);
+    --l2:#DE8A3C;
+    --l2-soft:rgba(222,138,60,0.20);
+    --l3:#4C7FD9;
+    --l3-soft:rgba(76,127,217,0.20);
+    --l4:#8A93A1;
+    --l4-soft:rgba(138,147,161,0.20);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
@@ -151,6 +159,10 @@
   .vacation-band.project{
     background:var(--proj-soft);border:1px solid var(--proj);
   }
+  .vacation-band.l1{ background:var(--l1-soft);border:1px solid var(--l1); }
+  .vacation-band.l2{ background:var(--l2-soft);border:1px solid var(--l2); }
+  .vacation-band.l3{ background:var(--l3-soft);border:1px solid var(--l3); }
+  .vacation-band.l4{ background:var(--l4-soft);border:1px solid var(--l4); }
 
   .today-line{
     position:absolute;top:0;bottom:0;width:2px;background:var(--text);opacity:0.35;
