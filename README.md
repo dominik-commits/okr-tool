@@ -1,8 +1,13 @@
-# Planungskompass — geteilte Version mit Passwortschutz
+# Planungskompass & OKR-Tracker — geteilte Version mit Passwortschutz
 
-Diese Version läuft als eigenständige Next.js-App auf Vercel. Alle, die das
-Passwort kennen, sehen und bearbeiten dieselbe Planung (Ferien, Projekte,
-OKRs) — die Daten liegen zentral in einer Vercel-KV-Datenbank.
+Zwei eigenständige Tools in einer App, bewusst getrennt: der **Zeitstrahl**
+(Feiertage, Ferien, Projekte, Kampagnen) unter `/` und der **OKR-Tracker**
+(Objectives, Key Results, Gewichtung, Status-Updates) unter `/okrs`. Beide
+sind über einen kleinen Link im Kopfbereich miteinander verlinkt.
+
+Alle, die das Passwort kennen, sehen und bearbeiten dieselben Daten — die
+liegen zentral in einer Vercel-KV-Datenbank (zwei getrennte Schlüssel, einer
+pro Tool).
 
 ## Deployment auf Vercel
 
@@ -52,5 +57,7 @@ neuen Passwort nötig, sobald das alte Cookie ungültig wird.
 - `middleware.ts` — prüft das Auth-Cookie auf allen Seiten/APIs außer `/login`.
 - `app/login/page.tsx` — Login-Formular.
 - `app/api/login/route.ts` — prüft Passwort, setzt Cookie.
-- `app/api/data/route.ts` — liest/schreibt die geteilten Planungsdaten (Vercel KV).
-- `app/page.tsx` — der eigentliche Planungskompass (Zeitstrahl, OKRs, Projekte).
+- `app/api/data/route.ts` — liest/schreibt die Zeitstrahl-Daten (Vercel KV).
+- `app/api/okr-data/route.ts` — liest/schreibt die OKR-Daten (Vercel KV, eigener Schlüssel).
+- `app/page.tsx` — der Zeitstrahl (Feiertage, Ferien, Projekte, Kampagnen).
+- `app/okrs/page.tsx` — der OKR-Tracker (Objectives, Key Results, Status-Updates).
