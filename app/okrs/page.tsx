@@ -1,13 +1,5 @@
-import LogoutButton from '../../components/LogoutButton';
-import OkrTracker from './OkrTracker';
+import Cockpit from './Cockpit';
 
 export default function Page() {
-  return (
-    <>
-      <OkrTracker />
-      <div style={{ position: 'fixed', top: 20, right: 20 }}>
-        <LogoutButton />
-      </div>
-    </>
-  );
+  return <Cockpit />;
 }

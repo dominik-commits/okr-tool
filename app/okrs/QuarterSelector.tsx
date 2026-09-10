@@ -2,19 +2,19 @@ import styles from './okrs.module.css';
 import { CYCLES } from './constants';
 import { CycleId } from './types';
 
-interface CycleTabsProps {
+interface QuarterSelectorProps {
   activeCycle: CycleId;
   onChange: (id: CycleId) => void;
 }
 
-export default function CycleTabs({ activeCycle, onChange }: CycleTabsProps) {
+export default function QuarterSelector({ activeCycle, onChange }: QuarterSelectorProps) {
   return (
-    <div className={styles.cycleTabs}>
+    <div className={styles.quarterGroup}>
       {CYCLES.map((c) => (
         <button
           key={c.id}
           type="button"
-          className={`${styles.cycleTab} ${c.id === activeCycle ? styles.cycleTabActive : ''}`}
+          className={`${styles.quarterPill} ${c.id === activeCycle ? styles.quarterPillActive : ''}`}
           onClick={() => onChange(c.id)}
         >
           {c.label}
