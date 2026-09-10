@@ -1,0 +1,607 @@
+.wrap {
+  --bg: #12151a;
+  --panel: #1b2129;
+  --panel-2: #20272f;
+  --border: #2b333d;
+  --text: #e9e5da;
+  --muted: #8a93a1;
+  --teal: #4c948c;
+  --teal-soft: rgba(76, 148, 140, 0.16);
+  --coral: #c1594b;
+  --gold: #c9973e;
+  --on: #6fa870;
+  --risk: #de8a3c;
+  --off: #c1594b;
+
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap,
+.wrap * {
+  box-sizing: border-box;
+}
+
+.header {
+  margin-bottom: 24px;
+}
+
+.title {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: clamp(26px, 5vw, 36px);
+  margin: 0 0 6px;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  color: var(--muted);
+  font-size: 14.5px;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.inlineLink {
+  color: var(--teal);
+}
+
+.sectionTitle {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 18px;
+  margin: 0 0 12px;
+}
+
+/* cycle tabs */
+
+.cycleTabs {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0 22px;
+  flex-wrap: wrap;
+}
+
+.cycleTab {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 7px;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cycleTabActive {
+  color: var(--text);
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+
+/* overall progress */
+
+.overall {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.overallLabel {
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 150px;
+}
+
+.overallScoreValue {
+  font-family: 'Fraunces', serif;
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.overallSpark {
+  flex-shrink: 0;
+}
+
+.barTrack {
+  flex: 1;
+  min-width: 160px;
+  height: 10px;
+  background: var(--panel-2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.barTrackThin {
+  height: 7px;
+}
+
+.barFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--teal), var(--gold));
+  border-radius: 5px;
+  transition: width 0.2s ease;
+}
+
+.section {
+  margin-bottom: 28px;
+}
+
+/* objective card */
+
+.objective {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px 18px;
+  margin-bottom: 16px;
+}
+
+.objHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.objTitleRow {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.objTitleInput {
+  flex: 1;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.objWeight {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.objWeightInput {
+  width: 48px;
+  text-align: right;
+}
+
+.objDel {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 4px;
+}
+
+.objDel:hover {
+  color: var(--coral);
+}
+
+.objProgressRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+.objPct {
+  font-size: 12.5px;
+  color: var(--muted);
+  width: 38px;
+  text-align: right;
+}
+
+/* key result */
+
+.kr {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.krRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.krTextInput {
+  flex: 1;
+  min-width: 180px;
+  font-size: 13.5px;
+}
+
+.krRangeInput {
+  width: 100px;
+  accent-color: var(--teal);
+}
+
+.krPct {
+  font-size: 12px;
+  color: var(--muted);
+  width: 34px;
+  text-align: right;
+}
+
+.krWeight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.krWeightInput {
+  width: 42px;
+  text-align: right;
+}
+
+.krDel {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.krDel:hover {
+  color: var(--coral);
+}
+
+.statusDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  position: relative;
+}
+
+.statusDot[data-status='on'] {
+  background: var(--on);
+}
+
+.statusDot[data-status='risk'] {
+  background: var(--risk);
+}
+
+.statusDot[data-status='off'] {
+  background: var(--off);
+}
+
+.krMeta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.mfield {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mfieldLabel {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.mfieldInput {
+  font-size: 12px;
+  padding: 5px 7px;
+  min-width: 110px;
+}
+
+.krSpark {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+}
+
+/* updates */
+
+.updates {
+  margin-top: 8px;
+}
+
+.updateItem {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 0;
+  border-top: 1px solid var(--border);
+}
+
+.updateItem:first-of-type {
+  border-top: none;
+}
+
+.uDate {
+  white-space: nowrap;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.uText {
+  flex: 1;
+}
+
+.updateItemDel {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.updateItemDel:hover {
+  color: var(--coral);
+}
+
+.updateAdd {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.updateAddInput {
+  flex: 1;
+  font-size: 12.5px;
+}
+
+.updateAddBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 5px;
+  padding: 4px 9px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.updateAddBtn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.updatesToggle {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 2px 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.updatesToggle:hover {
+  color: var(--text);
+}
+
+/* add buttons */
+
+.addKr {
+  background: none;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12.5px;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  margin-top: 2px;
+}
+
+.addKr:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.addObj {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+  margin-top: 6px;
+}
+
+.addObj:hover {
+  border-color: var(--teal);
+}
+
+.empty {
+  color: var(--muted);
+  font-size: 13.5px;
+  padding: 20px 0;
+  text-align: center;
+}
+
+/* form controls */
+
+.input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.input::-webkit-inner-spin-button {
+  opacity: 0.6;
+}
+
+.focusRing:focus {
+  outline: 1px solid var(--teal);
+}
+
+/* evaluation */
+
+.evalPanel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px 20px;
+}
+
+.evalIntro {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.evalRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.evalLabel {
+  width: 220px;
+  font-size: 12.5px;
+  color: var(--text);
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evalBarTrack {
+  flex: 1;
+  height: 14px;
+  background: var(--panel-2);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.evalBarTarget {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(255, 255, 255, 0.06);
+  border-right: 2px dashed var(--muted);
+}
+
+.evalBarFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background: linear-gradient(90deg, var(--teal), var(--gold));
+  border-radius: 4px;
+}
+
+.evalPct {
+  width: 44px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.deptHeading {
+  font-size: 14px;
+  margin: 18px 0 10px;
+}
+
+.deptRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+}
+
+.deptLabel {
+  width: 150px;
+  font-size: 12.5px;
+  flex-shrink: 0;
+}
+
+.deptBarTrack {
+  flex: 1;
+  height: 10px;
+  background: var(--panel-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.deptBarFill {
+  height: 100%;
+  background: var(--teal);
+  border-radius: 4px;
+}
+
+.deptMeta {
+  font-size: 11px;
+  color: var(--muted);
+  width: 110px;
+  text-align: right;
+}
+
+/* footer */
+
+.footer {
+  margin-top: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.btnGhost {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btnGhost:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
