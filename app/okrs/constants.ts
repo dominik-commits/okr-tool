@@ -1,4 +1,4 @@
-import { Confidence, CycleId, OkrState, StatusValue } from './types';
+import { Confidence, CycleId, KrType, OkrState, StatusValue } from './types';
 
 export const CYCLES: { id: CycleId; label: string }[] = [
   { id: 'c2026h2', label: 'H2 2026' },
@@ -43,6 +43,16 @@ export const ATTENTION_STATUS_ORDER: StatusValue[] = ['off', 'risk', 'needs_upda
 export const MAX_ATTENTION_ITEMS = 5;
 
 export const CONFIDENCE_OPTIONS: Confidence[] = ['High', 'Medium', 'Low'];
+
+export const KR_TYPE_OPTIONS: { value: KrType; label: string }[] = [
+  { value: 'numeric_increase', label: 'Numerisch – steigend' },
+  { value: 'numeric_decrease', label: 'Numerisch – sinkend' },
+  { value: 'percentage', label: 'Prozentual' },
+  { value: 'milestone', label: 'Meilenstein' },
+  { value: 'binary', label: 'Erreicht / Nicht erreicht' },
+];
+
+export const NUMERIC_KR_TYPES: KrType[] = ['numeric_increase', 'numeric_decrease', 'percentage'];
 
 export const NAV_ITEMS = ['Cockpit', 'Objectives', 'Initiatives', 'Review', 'History', 'Settings'];
 

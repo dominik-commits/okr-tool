@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import styles from './okrs.module.css';
 import Header from './Header';
 import OkrHealth from './OkrHealth';
@@ -10,52 +10,12 @@ import ObjectiveCard from './ObjectiveCard';
 import ObjectiveDetailView from './ObjectiveDetailView';
 import KrDrawer from './KrDrawer';
 import { KrUpdateSubmission } from './UpdateKrForm';
+import { useOkrState } from './useOkrState';
 import { AttentionItem, buildAttentionItems } from './attention';
 import { buildManagementInsight } from './managementInsight';
-import { CYCLES, EMPTY_STATE, SEED_H2_2026_ID } from './constants';
-import { seedH2_2026 } from './seed';
-import {
-  clone,
-  computeKrProgress,
-  computeKrStatus,
-  computeObjectiveStatus,
-  expectedProgressForCycle,
-  migrateObjective,
-  overallScore,
-  todayISO,
-  todayStr,
-  uid,
-} from './utils';
-import { CycleId, KeyResult, Objective, OkrState, StatusValue } from './types';
-
-function applySeeds(draft: OkrState): boolean {
-  if (!draft.seeds) draft.seeds = [];
-  if (draft.seeds.includes(SEED_H2_2026_ID)) return false;
-  draft.objectives.c2026h2 = seedH2_2026();
-  draft.seeds.push(SEED_H2_2026_ID);
-  return true;
-}
-
-function migrateAllObjectives(draft: OkrState): void {
-  (Object.keys(draft.objectives) as CycleId[]).forEach((cid) => {
-    draft.objectives[cid] = (draft.objectives[cid] || []).map(migrateObjective);
-  });
-}
-
-function recordHistory(draft: OkrState): void {
-  const cid = draft.activeCycle;
-  if (!draft.cycleHistory[cid]) draft.cycleHistory[cid] = [];
-  const hist = draft.cycleHistory[cid];
-  const score = overallScore(draft.objectives[cid] || []);
-  const today = todayISO();
-  const last = hist[hist.length - 1];
-  if (last && last.date === today) {
-    last.score = score;
-  } else {
-    hist.push({ date: today, score });
-  }
-  if (hist.length > 90) hist.splice(0, hist.length - 90);
-}
+import { CYCLES } from './constants';
+import { computeKrProgress, computeKrStatus, computeObjectiveStatus, expectedProgressForCycle, overallScore, todayISO, todayStr, uid } from './utils';
+import { KeyResult, StatusValue } from './types';
 
 type Screen = { type: 'cockpit' } | { type: 'objective'; objectiveId: string };
 
@@ -66,85 +26,13 @@ interface Selection {
 }
 
 export default function Cockpit() {
-  const [state, setState] = useState<OkrState>(EMPTY_STATE);
-  const [status, setStatus] = useState('Lädt…');
+  const { state, status, mutate, setActiveCycle } = useOkrState();
   const [screen, setScreen] = useState<Screen>({ type: 'cockpit' });
   const [selection, setSelection] = useState<Selection | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loaded = useRef(false);
 
-  const scheduleSave = useCallback((next: OkrState) => {
-    setStatus('Speichert…');
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(async () => {
-      try {
-        const res = await fetch('/api/okr-data', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(next),
-        });
-        if (res.status === 401) {
-          window.location.href = '/login';
-          return;
-        }
-        setStatus(res.ok ? 'Gespeichert — geteilt mit allen' : 'Speichern fehlgeschlagen');
-      } catch {
-        setStatus('Speichern fehlgeschlagen (Verbindung prüfen)');
-      }
-    }, 300);
-  }, []);
-
-  const mutate = useCallback(
-    (fn: (draft: OkrState) => void) => {
-      setState((prev) => {
-        const draft = clone(prev);
-        fn(draft);
-        recordHistory(draft);
-        scheduleSave(draft);
-        return draft;
-      });
-    },
-    [scheduleSave]
-  );
-
-  useEffect(() => {
-    if (loaded.current) return;
-    loaded.current = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/okr-data');
-        if (res.status === 401) {
-          window.location.href = '/login';
-          return;
-        }
-        const data = await res.json();
-        const draft = clone(EMPTY_STATE);
-        if (data && data.value) {
-          const parsed = data.value;
-          draft.objectives = Object.assign({ c2026h2: [], c2027h1: [], c2027h2: [] }, parsed.objectives || {});
-          draft.cycleHistory = Object.assign({ c2026h2: [], c2027h1: [], c2027h2: [] }, parsed.cycleHistory || {});
-          draft.seeds = parsed.seeds || [];
-          draft.activeCycle = parsed.activeCycle || 'c2026h2';
-        }
-        migrateAllObjectives(draft);
-        const seeded = applySeeds(draft);
-        setState(draft);
-        if (seeded) scheduleSave(draft);
-        setStatus('Gespeichert — geteilt mit allen');
-      } catch {
-        const draft = clone(EMPTY_STATE);
-        applySeeds(draft);
-        setState(draft);
-        setStatus('Neu — noch nichts gespeichert');
-      }
-    })();
-  }, [scheduleSave]);
-
-  function setActiveCycle(id: CycleId) {
+  function changeCycle(id: Parameters<typeof setActiveCycle>[0]) {
     setScreen({ type: 'cockpit' });
-    mutate((draft) => {
-      draft.activeCycle = id;
-    });
+    setActiveCycle(id);
   }
 
   function openObjective(objectiveId: string) {
@@ -237,7 +125,14 @@ export default function Cockpit() {
   return (
     <div className={styles.cockpit}>
       <div className={styles.inner}>
-        <Header onCockpit={screen.type === 'cockpit'} onBack={backToCockpit} activeCycle={state.activeCycle} onCycleChange={setActiveCycle} />
+        <Header
+          activeNav="Cockpit"
+          showTopControls={screen.type === 'cockpit'}
+          showBack={screen.type !== 'cockpit'}
+          onBack={backToCockpit}
+          activeCycle={state.activeCycle}
+          onCycleChange={changeCycle}
+        />
 
         {screen.type === 'cockpit' ? (
           <>

@@ -1,17 +1,25 @@
+import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import LogoutButton from '../../components/LogoutButton';
 import styles from './okrs.module.css';
-import { CYCLES } from './constants';
+import { CYCLES, NAV_ITEMS } from './constants';
 import { CycleId } from './types';
 
+const NAV_HREF: Partial<Record<(typeof NAV_ITEMS)[number], string>> = {
+  Cockpit: '/okrs',
+  Objectives: '/okrs/objectives',
+};
+
 interface HeaderProps {
-  onCockpit: boolean;
-  onBack: () => void;
+  activeNav: 'Cockpit' | 'Objectives';
+  showTopControls: boolean;
+  showBack?: boolean;
+  onBack?: () => void;
   activeCycle: CycleId;
   onCycleChange: (id: CycleId) => void;
 }
 
-export default function Header({ onCockpit, onBack, activeCycle, onCycleChange }: HeaderProps) {
+export default function Header({ activeNav, showTopControls, showBack, onBack, activeCycle, onCycleChange }: HeaderProps) {
   const cycleIndex = CYCLES.findIndex((c) => c.id === activeCycle);
   const cycleLabel = CYCLES[cycleIndex]?.label ?? '';
 
@@ -23,14 +31,36 @@ export default function Header({ onCockpit, onBack, activeCycle, onCycleChange }
   return (
     <div className={styles.header}>
       <div className={styles.headerLeft}>
-        {!onCockpit && (
+        {showBack && (
           <button type="button" className={styles.backBtn} onClick={onBack} aria-label="Zurück">
             <ArrowLeft size={16} />
           </button>
         )}
         <span className={styles.brand}>OKR Command Center</span>
+        <nav className={styles.nav}>
+          {NAV_ITEMS.map((item) => {
+            const href = NAV_HREF[item];
+            const isActive = item === activeNav;
+            if (href) {
+              return (
+                <Link
+                  key={item}
+                  href={href}
+                  className={`${styles.navItem} ${styles.navLink} ${isActive ? styles.navItemActive : ''}`}
+                >
+                  {item}
+                </Link>
+              );
+            }
+            return (
+              <span key={item} className={styles.navItem}>
+                {item}
+              </span>
+            );
+          })}
+        </nav>
       </div>
-      {onCockpit && (
+      {showTopControls && (
         <div className={styles.headerRight}>
           <button type="button" className={styles.pill} onClick={cycleNext} title="Zyklus wechseln">
             {cycleLabel}
