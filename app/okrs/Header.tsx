@@ -29,9 +29,12 @@ export default function Header({ activeNav, showTopControls, activeCycle, onCycl
     <div className={styles.header}>
       <div className={styles.headerLeft}>
         <div className={styles.appTabs}>
-          <Link href="/" className={styles.appTab}>
+          {/* Plain <a>, not next/link: "/" is a raw HTML+script page (dangerouslySetInnerHTML) whose
+              inline <script> only runs on a real navigation — a client-side Link transition inserts it
+              via innerHTML, which browsers never execute, leaving the timeline stuck on "Lädt…". */}
+          <a href="/" className={styles.appTab}>
             Zeitstrahl
-          </Link>
+          </a>
           <span className={`${styles.appTab} ${styles.appTabActive}`}>OKR Command Center</span>
         </div>
         <nav className={styles.nav}>
