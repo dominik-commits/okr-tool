@@ -2,13 +2,14 @@ import { RefObject, useMemo, useRef } from 'react';
 import styles from './timeline.module.css';
 import { LABEL_WIDTH, SWIMLANES } from './constants';
 import { VacationEntry } from './types';
-import { buildMonths, buildQuarters, computeLanes, entriesOfTypes, trackWidth } from './utils';
+import { buildMonths, buildQuarters, computeLanes, entriesOfTypes, trackWidthFor } from './utils';
 import SwimlaneTrack, { ROW_PADDING, TRACK_GAP } from './Swimlane';
 import SwimlaneLabel from './SwimlaneLabel';
 import BackgroundLayer from './BackgroundLayer';
 
 interface TimelineGridProps {
   entries: VacationEntry[];
+  pxPerDay: number;
   onOpenEntry: (entry: VacationEntry) => void;
   scrollRef: RefObject<HTMLDivElement>;
 }
@@ -20,9 +21,10 @@ interface TimelineGridProps {
  * this app's target browser, silently leaving the header/labels behind; plain synced scrollTop/Left
  * has none of that fragility.
  */
-export default function TimelineGrid({ entries, onOpenEntry, scrollRef }: TimelineGridProps) {
-  const months = buildMonths();
-  const quarters = buildQuarters();
+export default function TimelineGrid({ entries, pxPerDay, onOpenEntry, scrollRef }: TimelineGridProps) {
+  const months = useMemo(() => buildMonths(pxPerDay), [pxPerDay]);
+  const quarters = useMemo(() => buildQuarters(pxPerDay), [pxPerDay]);
+  const trackWidth = trackWidthFor(pxPerDay);
   const headerScrollRef = useRef<HTMLDivElement>(null);
   const labelScrollRef = useRef<HTMLDivElement>(null);
 
@@ -77,9 +79,9 @@ export default function TimelineGrid({ entries, onOpenEntry, scrollRef }: Timeli
 
         <div className={styles.scrollArea} ref={scrollRef} onScroll={handleScroll}>
           <div className={styles.canvas} style={{ width: trackWidth }}>
-            <BackgroundLayer />
+            <BackgroundLayer pxPerDay={pxPerDay} />
             {laneData.map(({ lane, entries: laneEntries, laneOf, height }) => (
-              <SwimlaneTrack key={lane.id} lane={lane} entries={laneEntries} laneOf={laneOf} height={height} onOpenEntry={onOpenEntry} />
+              <SwimlaneTrack key={lane.id} lane={lane} entries={laneEntries} laneOf={laneOf} height={height} pxPerDay={pxPerDay} onOpenEntry={onOpenEntry} />
             ))}
           </div>
         </div>

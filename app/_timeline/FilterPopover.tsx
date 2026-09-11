@@ -1,8 +1,8 @@
 'use client';
 
 import styles from './timeline.module.css';
-import { STATUS_LABEL, STATUS_OPTIONS, SWIMLANES } from './constants';
-import { EntryStatus, FilterState, KindType, LevelType } from './types';
+import { CATEGORY_OPTIONS, STATUS_LABEL, STATUS_OPTIONS, SWIMLANES } from './constants';
+import { EntryCategory, EntryStatus, FilterState, KindType, LevelType } from './types';
 
 const LEVELS: LevelType[] = ['l1', 'l2', 'l3', 'l4'];
 const KINDS: { value: KindType; label: string }[] = [
@@ -41,6 +41,22 @@ export default function FilterPopover({ filters, onChange }: FilterPopoverProps)
         </label>
       ))}
 
+      <div className={styles.popoverTitle}>Kategorie</div>
+      {CATEGORY_OPTIONS.map((category) => (
+        <label key={category} className={styles.checkRow}>
+          <input
+            type="checkbox"
+            checked={filters.categories.includes(category)}
+            onChange={() => onChange({ ...filters, categories: toggle(filters.categories, category) })}
+          />
+          {category}
+        </label>
+      ))}
+      <label className={styles.checkRow}>
+        <input type="checkbox" checked={filters.categories.includes('none')} onChange={() => onChange({ ...filters, categories: toggle(filters.categories, 'none') })} />
+        Nicht kategorisiert
+      </label>
+
       <div className={styles.popoverTitle}>Status</div>
       {STATUS_OPTIONS.map((status) => (
         <label key={status} className={styles.checkRow}>
@@ -70,6 +86,7 @@ export function defaultFilterState(): FilterState {
     levels: ['l1', 'l2', 'l3', 'l4'],
     kinds: ['vacation', 'project'],
     statuses: [...STATUS_OPTIONS, 'none'] as (EntryStatus | 'none')[],
+    categories: [...CATEGORY_OPTIONS, 'none'] as (EntryCategory | 'none')[],
     owner: '',
   };
 }
@@ -79,6 +96,7 @@ export function countActiveFilters(filters: FilterState): number {
   count += 4 - filters.levels.length;
   count += 2 - filters.kinds.length;
   count += STATUS_OPTIONS.length + 1 - filters.statuses.length;
+  count += CATEGORY_OPTIONS.length + 1 - filters.categories.length;
   if (filters.owner.trim()) count += 1;
   return count;
 }

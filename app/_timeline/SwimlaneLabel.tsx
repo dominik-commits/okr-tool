@@ -13,7 +13,7 @@ export default function SwimlaneLabel({ lane, count, height }: SwimlaneLabelProp
       <span className={styles.laneIcon} style={{ fontSize: lane.fontSize + 3 }}>
         {lane.icon}
       </span>
-      <span className={styles.laneLabelText} style={{ fontSize: lane.fontSize, fontWeight: lane.fontWeight, color: lane.color }}>
+      <span className={styles.laneLabelText} style={{ fontSize: lane.fontSize, fontWeight: lane.fontWeight }}>
         {lane.label}
         {count > 0 && <span className={styles.laneCount}> · {count}</span>}
       </span>

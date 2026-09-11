@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import styles from './timeline.module.css';
-import { END_ISO, START_ISO, STATUS_LABEL, STATUS_OPTIONS, TYPE_LABEL, TYPE_OPTIONS } from './constants';
-import { EntryStatus, EntryType, VacationEntry } from './types';
+import { CATEGORY_OPTIONS, END_ISO, START_ISO, STATUS_LABEL, STATUS_OPTIONS, TYPE_LABEL, TYPE_OPTIONS } from './constants';
+import { EntryCategory, EntryStatus, EntryType, VacationEntry } from './types';
 import { fmtDate, toDate, uid, weekLabel } from './utils';
 
 interface EntryDrawerProps {
@@ -28,6 +28,7 @@ export default function EntryDrawer({ mode, entry, allEntries, onClose, onSaveNe
   const [start, setStart] = useState(entry?.start ?? '');
   const [end, setEnd] = useState(entry?.end ?? '');
   const [status, setStatus] = useState<EntryStatus | ''>(entry?.status ?? '');
+  const [category, setCategory] = useState<EntryCategory | ''>(entry?.category ?? '');
   const [owner, setOwner] = useState(entry?.owner ?? '');
   const [note, setNote] = useState(entry?.note ?? '');
   const [parentId, setParentId] = useState(entry?.parentId ?? '');
@@ -55,6 +56,7 @@ export default function EntryDrawer({ mode, entry, allEntries, onClose, onSaveNe
       start,
       end,
       status: status || undefined,
+      category: category || undefined,
       owner: owner.trim() || undefined,
       note: note.trim() || undefined,
       parentId: parentId || null,
@@ -104,6 +106,10 @@ export default function EntryDrawer({ mode, entry, allEntries, onClose, onSaveNe
                 <div>
                   <div className={styles.detailLabel}>Ebene</div>
                   <div className={styles.detailValue}>{TYPE_LABEL[entry.type]}</div>
+                </div>
+                <div>
+                  <div className={styles.detailLabel}>Kategorie</div>
+                  <div className={styles.detailValue}>{entry.category ?? 'Nicht kategorisiert'}</div>
                 </div>
                 <div>
                   <div className={styles.detailLabel}>Status</div>
@@ -170,6 +176,18 @@ export default function EntryDrawer({ mode, entry, allEntries, onClose, onSaveNe
                   {TYPE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.formField}>
+                <label className={styles.formLabel}>Kategorie</label>
+                <select className={styles.formInput} value={category} onChange={(e) => setCategory(e.target.value as EntryCategory | '')}>
+                  <option value="">– Nicht kategorisiert –</option>
+                  {CATEGORY_OPTIONS.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
                     </option>
                   ))}
                 </select>

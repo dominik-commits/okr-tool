@@ -1,4 +1,4 @@
-import { END_ISO, PX_PER_DAY, START_ISO } from './constants';
+import { END_ISO, START_ISO } from './constants';
 import { EntryType, VacationEntry } from './types';
 
 const MS_DAY = 86400000;
@@ -26,8 +26,8 @@ export function dayOffset(iso: string): number {
   return Math.round((toDate(iso).getTime() - toDate(START_ISO).getTime()) / MS_DAY);
 }
 
-export function px(iso: string): number {
-  return dayOffset(iso) * PX_PER_DAY;
+export function px(iso: string, pxPerDay: number): number {
+  return dayOffset(iso) * pxPerDay;
 }
 
 export function fmtDate(iso: string): string {
@@ -56,7 +56,10 @@ export function weekLabel(iso: string): string {
 }
 
 export const totalDays = Math.round((toDate(END_ISO).getTime() - toDate(START_ISO).getTime()) / MS_DAY) + 1;
-export const trackWidth = totalDays * PX_PER_DAY;
+
+export function trackWidthFor(pxPerDay: number): number {
+  return totalDays * pxPerDay;
+}
 
 export interface MonthCell {
   y: number;
@@ -65,13 +68,13 @@ export interface MonthCell {
   width: number;
 }
 
-export function buildMonths(): MonthCell[] {
+export function buildMonths(pxPerDay: number): MonthCell[] {
   const months: MonthCell[] = [];
   let y = 2026;
   let m = 8;
   while (y < 2027 || (y === 2027 && m <= 11)) {
     const startStr = `${y}-${String(m + 1).padStart(2, '0')}-01`;
-    months.push({ y, m, left: px(startStr), width: daysInMonth(y, m) * PX_PER_DAY });
+    months.push({ y, m, left: px(startStr, pxPerDay), width: daysInMonth(y, m) * pxPerDay });
     m++;
     if (m > 11) {
       m = 0;
@@ -87,7 +90,7 @@ export interface QuarterCell {
   width: number;
 }
 
-export function buildQuarters(): QuarterCell[] {
+export function buildQuarters(pxPerDay: number): QuarterCell[] {
   const quarters: QuarterCell[] = [];
   let y = 2026;
   let q = 3; // Q3 2026 starts the visible range (Sep is in Q3)
@@ -106,8 +109,8 @@ export function buildQuarters(): QuarterCell[] {
     const rangeEnd = toDate(qEndIso) > toDate(END_ISO) ? END_ISO : qEndIso;
     quarters.push({
       label: `Q${q} ${y}`,
-      left: px(rangeStart),
-      width: px(rangeEnd) + PX_PER_DAY - px(rangeStart),
+      left: px(rangeStart, pxPerDay),
+      width: px(rangeEnd, pxPerDay) + pxPerDay - px(rangeStart, pxPerDay),
     });
     q++;
     if (q > 4) {

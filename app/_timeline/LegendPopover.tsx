@@ -1,15 +1,44 @@
+import { Check } from 'lucide-react';
 import styles from './timeline.module.css';
-import { SWIMLANES } from './constants';
+import { CATEGORY_COLOR, CATEGORY_OPTIONS, SWIMLANES } from './constants';
 
 export default function LegendPopover() {
   return (
     <div className={`${styles.popover} ${styles.popoverLegend}`}>
-      <div className={styles.popoverTitle}>Ebenen</div>
+      <div className={styles.popoverTitle}>Kategorie (Balkenfarbe)</div>
+      {CATEGORY_OPTIONS.map((category) => (
+        <div key={category} className={styles.legendRow}>
+          <span className={styles.legendDot} style={{ background: CATEGORY_COLOR[category].color }} />
+          {category}
+        </div>
+      ))}
+
+      <div className={styles.popoverTitle}>Status (Rand/Symbol)</div>
+      <div className={styles.legendRow}>
+        <span className={styles.legendStatusSample} style={{ borderStyle: 'dashed' }} />
+        Geplant / Idee
+      </div>
+      <div className={styles.legendRow}>
+        <span className={styles.legendStatusSample} style={{ borderStyle: 'solid' }} />
+        In Umsetzung
+      </div>
+      <div className={styles.legendRow}>
+        <span className={styles.legendStatusSample} style={{ borderStyle: 'solid', position: 'relative' }}>
+          <span className={styles.legendDoneBadge}>
+            <Check size={8} strokeWidth={3} color="#0d0f13" />
+          </span>
+        </span>
+        Abgeschlossen
+      </div>
+      <div className={styles.legendRow}>
+        <span className={styles.legendStatusSample} style={{ borderStyle: 'solid', opacity: 0.5 }} />
+        Abgesagt / pausiert
+      </div>
+
+      <div className={styles.popoverTitle}>Ebenen (Zeile, Höhe, Typografie)</div>
       {SWIMLANES.map((lane) => (
         <div key={lane.id} className={styles.legendRow}>
-          <span className={styles.legendSwatch} style={{ background: lane.soft, color: lane.color }}>
-            {lane.icon}
-          </span>
+          <span className={styles.legendIconSwatch}>{lane.icon}</span>
           {lane.label}
         </div>
       ))}

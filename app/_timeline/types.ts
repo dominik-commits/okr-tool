@@ -7,6 +7,9 @@ export type EntryType = 'vacation' | 'project' | 'l1' | 'l2' | 'l3' | 'l4';
 
 export type EntryStatus = 'Planned' | 'In Progress' | 'Blocked' | 'Done';
 
+/** Drives the bar's main color. Optional — older entries without one render as "uncategorized". */
+export type EntryCategory = 'Umsatzkampagne' | 'Kommunikationskampagne' | 'Reichweitenkampagne' | 'Infrastruktur';
+
 export interface VacationEntry {
   id: string;
   type: EntryType;
@@ -17,6 +20,7 @@ export interface VacationEntry {
   status?: EntryStatus;
   owner?: string;
   note?: string;
+  category?: EntryCategory;
   /** id of another entry this one belongs under, e.g. an L4 Maßnahme linked to its L1 Kampagne. */
   parentId?: string | null;
 }
@@ -47,6 +51,7 @@ export interface FilterState {
   levels: LevelType[];
   kinds: KindType[];
   statuses: (EntryStatus | 'none')[];
+  categories: (EntryCategory | 'none')[];
   owner: string;
 }
 

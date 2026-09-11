@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Info } from 'lucide-react';
 import styles from './timeline.module.css';
-import { LABEL_WIDTH } from './constants';
+import { DEFAULT_PX_PER_DAY, LABEL_WIDTH } from './constants';
 import { defaultFilterState } from './FilterPopover';
 import Header from './Header';
 import PeriodPills from './PeriodPills';
+import ZoomControl from './ZoomControl';
 import LegendPopover from './LegendPopover';
 import StatusLine from './StatusLine';
 import TimelineGrid from './TimelineGrid';
@@ -25,7 +26,9 @@ export default function TimelinePage() {
   const [legendOpen, setLegendOpen] = useState(false);
   const [activePeriod, setActivePeriod] = useState<CycleId | 'all'>('all');
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [pxPerDay, setPxPerDay] = useState(DEFAULT_PX_PER_DAY);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pendingCenterDay = useRef<number | null>(null);
 
   const filteredEntries = useMemo(() => {
     return state.vacations.filter((e) => {
@@ -33,10 +36,30 @@ export default function TimelinePage() {
       if ((e.type === 'vacation' || e.type === 'project') && !filters.kinds.includes(e.type)) return false;
       const statusKey = e.status ?? 'none';
       if (!filters.statuses.includes(statusKey)) return false;
+      const categoryKey = e.category ?? 'none';
+      if (!filters.categories.includes(categoryKey)) return false;
       if (filters.owner.trim() && !(e.owner || '').toLowerCase().includes(filters.owner.trim().toLowerCase())) return false;
       return true;
     });
   }, [state.vacations, filters]);
+
+  // Zoom keeps whatever date was centered in view centered again after the width change, instead of
+  // leaving the user at a jarring, unrelated pixel offset.
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (pendingCenterDay.current == null || !container) return;
+    const target = pendingCenterDay.current * pxPerDay - container.clientWidth / 2;
+    container.scrollLeft = Math.max(target, 0);
+    pendingCenterDay.current = null;
+  }, [pxPerDay]);
+
+  function handleZoomChange(next: number) {
+    const container = scrollRef.current;
+    if (container) {
+      pendingCenterDay.current = (container.scrollLeft + container.clientWidth / 2) / pxPerDay;
+    }
+    setPxPerDay(next);
+  }
 
   function handleSelectPeriod(id: CycleId | 'all') {
     setActivePeriod(id);
@@ -47,14 +70,14 @@ export default function TimelinePage() {
       return;
     }
     const cycle = CYCLES.find((c) => c.id === id);
-    if (cycle) container.scrollLeft = Math.max(px(cycle.start) - 12, 0);
+    if (cycle) container.scrollLeft = Math.max(px(cycle.start, pxPerDay) - 12, 0);
   }
 
   function handleToday() {
     const container = scrollRef.current;
     if (!container) return;
     const todayIso = isoOf(new Date());
-    const target = px(todayIso) - container.clientWidth / 2;
+    const target = px(todayIso, pxPerDay) - container.clientWidth / 2;
     container.scrollLeft = Math.max(target, 0);
   }
 
@@ -91,7 +114,10 @@ export default function TimelinePage() {
         />
 
         <div className={styles.toolbar}>
-          <PeriodPills active={activePeriod} onSelect={handleSelectPeriod} />
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <PeriodPills active={activePeriod} onSelect={handleSelectPeriod} />
+            <ZoomControl pxPerDay={pxPerDay} onChange={handleZoomChange} />
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <StatusLine entries={filteredEntries} />
             <div className={styles.popoverWrap}>
@@ -104,7 +130,7 @@ export default function TimelinePage() {
           </div>
         </div>
 
-        <TimelineGrid entries={filteredEntries} onOpenEntry={(entry) => setSelection({ mode: 'view', entry })} scrollRef={scrollRef} />
+        <TimelineGrid entries={filteredEntries} pxPerDay={pxPerDay} onOpenEntry={(entry) => setSelection({ mode: 'view', entry })} scrollRef={scrollRef} />
 
         <div className={styles.toolbar} style={{ marginTop: 14, marginBottom: 0 }}>
           <span className={styles.saveStatus}>{status}</span>
