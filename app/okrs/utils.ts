@@ -255,11 +255,29 @@ export function describeGap(kr: KeyResult, expectedProgress: number): string | n
 
 // ---------- short labels ----------
 
-/** Derives a compact label from a longer sentence (splits on em-dash/period, then truncates). */
+/**
+ * Derives a compact label from a longer sentence: takes the part before the first em-dash (our
+ * "headline — rationale" convention), then hard-truncates. Deliberately does NOT split on ". " —
+ * abbreviations like "Mio." or "z. B." contain that exact substring and would get chopped mid-word.
+ */
 export function deriveShortTitle(text: string, maxLength: number = 40): string {
-  const firstClause = (text || '').split(' — ')[0].split('. ')[0].trim();
+  const firstClause = (text || '').split(' — ')[0].trim();
   if (firstClause.length <= maxLength) return firstClause;
   return `${firstClause.slice(0, maxLength - 1).trim()}…`;
+}
+
+/**
+ * Parses a German-formatted display string ("1,12", "24.600", "20 Mio. €", "+15 %") into its leading
+ * numeric value. '.' is treated as a thousands separator, ',' as the decimal separator — matching how
+ * every current/target/baseline string in this app is written. Returns null when nothing parses.
+ */
+export function parseGermanNumber(display: string | null | undefined): number | null {
+  if (!display) return null;
+  const match = display.trim().match(/^[+-]?[\d.,]+/);
+  if (!match) return null;
+  const normalized = match[0].includes(',') ? match[0].replace(/\./g, '').replace(',', '.') : match[0].replace(/\./g, '');
+  const value = Number(normalized);
+  return Number.isFinite(value) ? value : null;
 }
 
 // ---------- ISO week labels (for the drawer's history chart) ----------
@@ -284,6 +302,9 @@ export function isoWeekLabel(iso: string): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function migrateKeyResult(raw: any): KeyResult {
   const text = raw.text ?? '';
+  const current = raw.current ?? '';
+  const target = raw.target ?? '';
+  const baseline = raw.baseline ?? '';
   return {
     id: (raw.id as string) ?? uid(),
     text,
@@ -297,12 +318,14 @@ export function migrateKeyResult(raw: any): KeyResult {
     history: Array.isArray(raw.history) ? raw.history : [],
     updates: Array.isArray(raw.updates) ? raw.updates : [],
     krType: raw.krType ?? 'percentage',
-    current: raw.current ?? '',
-    currentValue: isFiniteNumber(raw.currentValue) ? raw.currentValue : null,
-    target: raw.target ?? '',
-    targetValue: isFiniteNumber(raw.targetValue) ? raw.targetValue : null,
-    baseline: raw.baseline ?? '',
-    baselineValue: isFiniteNumber(raw.baselineValue) ? raw.baselineValue : null,
+    // Keep the original display string untouched; only backfill the numeric fields used for progress
+    // calculation, and only when they're missing — never overwrite an already-migrated value.
+    current,
+    currentValue: isFiniteNumber(raw.currentValue) ? raw.currentValue : parseGermanNumber(current),
+    target,
+    targetValue: isFiniteNumber(raw.targetValue) ? raw.targetValue : parseGermanNumber(target),
+    baseline,
+    baselineValue: isFiniteNumber(raw.baselineValue) ? raw.baselineValue : parseGermanNumber(baseline),
     confidence: raw.confidence ?? 'Medium',
     blocker: raw.blocker ?? '',
     nextAction: raw.nextAction ?? '',
