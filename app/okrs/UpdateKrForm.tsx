@@ -4,6 +4,7 @@ import { useState } from 'react';
 import styles from './okrs.module.css';
 import { CONFIDENCE_OPTIONS } from './constants';
 import { Confidence, KeyResult } from './types';
+import { extractUnitSuffix, formatValueLikeTarget } from './utils';
 
 export interface KrUpdateSubmission {
   whatChanged: string;
@@ -30,22 +31,28 @@ export default function UpdateKrForm({ kr, onSubmit, onCancel }: UpdateKrFormPro
   const [nextAction, setNextAction] = useState(kr.nextAction || '');
 
   const [numericValue, setNumericValue] = useState(kr.currentValue != null ? String(kr.currentValue) : '');
-  // For numeric types the display text starts blank so it can't silently go stale relative to a newly
-  // entered number; for milestones it's the only value field, so prefill it with the current text.
+  // Only milestones use free-text display; numeric types derive their display string from the number.
   const [displayValue, setDisplayValue] = useState(kr.krType === 'milestone' ? kr.current || '' : '');
   const [milestoneProgress, setMilestoneProgress] = useState(kr.progress);
   const [achieved, setAchieved] = useState(kr.progress >= 100);
 
+  const targetUnit = extractUnitSuffix(kr.target || '');
+  const numericFieldLabel = targetUnit ? `Aktueller Wert (${targetUnit})` : 'Aktueller Wert (Zahl)';
+
   function handleSubmit() {
     if (NUMERIC_TYPES.has(kr.krType)) {
-      const parsed = numericValue.trim() === '' ? null : Number(numericValue.replace(',', '.'));
+      const raw = numericValue.trim() === '' ? null : Number(numericValue.replace(',', '.'));
+      const parsed = raw != null && Number.isFinite(raw) ? raw : null;
       onSubmit({
         whatChanged,
         confidence,
         blocker,
         nextAction,
-        current: displayValue.trim() || (parsed != null ? String(parsed) : kr.current),
-        currentValue: Number.isFinite(parsed) ? parsed : kr.currentValue,
+        // Derive the display string from the same number/unit as baseline & target, instead of letting
+        // a separate free-text field drift out of sync with currentValue (that mismatch used to cause
+        // wildly wrong progress %, e.g. a value entered in absolute € while target reads "Mio. €").
+        current: parsed != null ? formatValueLikeTarget(kr, parsed) : kr.current,
+        currentValue: parsed != null ? parsed : kr.currentValue,
       });
       return;
     }
@@ -76,26 +83,17 @@ export default function UpdateKrForm({ kr, onSubmit, onCancel }: UpdateKrFormPro
   return (
     <div className={styles.updateForm}>
       {NUMERIC_TYPES.has(kr.krType) && (
-        <div className={styles.formRow2}>
-          <div className={styles.formField}>
-            <label className={styles.formLabel}>Aktueller Wert (Zahl)</label>
-            <input
-              type="number"
-              className={styles.formInput}
-              value={numericValue}
-              onChange={(e) => setNumericValue(e.target.value)}
-              placeholder={kr.targetValue != null ? String(kr.targetValue) : '0'}
-            />
-          </div>
-          <div className={styles.formField}>
-            <label className={styles.formLabel}>Anzeige (optional)</label>
-            <input
-              type="text"
-              className={styles.formInput}
-              value={displayValue}
-              onChange={(e) => setDisplayValue(e.target.value)}
-              placeholder={kr.current || 'z. B. 12,4 Mio. €'}
-            />
+        <div className={styles.formField}>
+          <label className={styles.formLabel}>{numericFieldLabel}</label>
+          <input
+            type="number"
+            className={styles.formInput}
+            value={numericValue}
+            onChange={(e) => setNumericValue(e.target.value)}
+            placeholder={kr.targetValue != null ? String(kr.targetValue) : '0'}
+          />
+          <div className={styles.formHint}>
+            Gleiche Einheit wie Baseline/Target: {kr.baseline || '–'} → {kr.target || '–'}. Anzeige wird automatisch daraus erzeugt.
           </div>
         </div>
       )}

@@ -7,7 +7,7 @@ import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
 import UpdateKrForm, { KrUpdateSubmission } from './UpdateKrForm';
 import { KeyResult, StatusValue } from './types';
-import { computeExpectedValueDisplay, computeKrProgress } from './utils';
+import { computeKrProgress } from './utils';
 
 interface KrDrawerProps {
   kr: KeyResult | null;
@@ -24,7 +24,6 @@ export default function KrDrawer({ kr, status, expectedProgress, initialShowForm
   if (!kr) return null;
 
   const progress = Math.round(computeKrProgress(kr));
-  const expectedToday = computeExpectedValueDisplay(kr, expectedProgress) ?? `${Math.round(expectedProgress)}%`;
   const lastUpdate = (kr.updates || [])[kr.updates.length - 1];
 
   function handleSubmit(submission: KrUpdateSubmission) {
@@ -52,14 +51,10 @@ export default function KrDrawer({ kr, status, expectedProgress, initialShowForm
             {status !== 'not_started' && <span className={styles.confidenceNote}>Confidence: {kr.confidence}</span>}
           </div>
 
-          <div className={styles.drawerGrid3}>
+          <div className={styles.drawerGrid2}>
             <div>
               <div className={styles.drawerFieldLabel}>Current</div>
               <div className={`${styles.drawerFieldValue} ${styles.mono}`}>{kr.current || '–'}</div>
-            </div>
-            <div>
-              <div className={styles.drawerFieldLabel}>Expected Today</div>
-              <div className={`${styles.drawerFieldValueMuted} ${styles.mono}`}>{expectedToday}</div>
             </div>
             <div>
               <div className={styles.drawerFieldLabel}>Target</div>

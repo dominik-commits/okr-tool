@@ -597,9 +597,9 @@
   font-size: 12.5px;
 }
 
-.drawerGrid3 {
+.drawerGrid2 {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
@@ -743,6 +743,12 @@
 
 .formInput:focus {
   outline: 1px solid var(--accent);
+}
+
+.formHint {
+  margin-top: 5px;
+  color: var(--faint);
+  font-size: 11.5px;
 }
 
 .formTextarea {

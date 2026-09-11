@@ -186,10 +186,10 @@ export function formatLastUpdateLabel(kr: KeyResult, now: Date = new Date()): st
   return `vor ${days} Tagen`;
 }
 
-// ---------- value formatting (Current / Expected Today / Target) ----------
+// ---------- value formatting (Current / Target) ----------
 
 /** Splits a display string like "20 Mio. €" into its unit suffix ("Mio. €"). */
-function extractUnitSuffix(display: string): string {
+export function extractUnitSuffix(display: string): string {
   const match = display.match(/^[-+]?[\d.,]+\s*(.*)$/);
   return match ? match[1] : '';
 }
@@ -204,24 +204,6 @@ export function formatValueLikeTarget(kr: KeyResult, value: number): string {
   const suffix = extractUnitSuffix(kr.target || '');
   const formatted = formatNumberDe(value, decimals);
   return suffix ? `${formatted} ${suffix}` : formatted;
-}
-
-/**
- * The value (in the KR's own unit) that would be "on pace" today, interpolated between baseline and
- * target using the cycle's time-based expected progress. Null when there's no numeric baseline/target
- * to interpolate between (milestone/binary types) — callers should show the expected % instead.
- */
-export function computeExpectedRawValue(kr: KeyResult, expectedProgress: number): number | null {
-  const { krType, targetValue, baselineValue } = kr;
-  if (!isFiniteNumber(targetValue) || !isFiniteNumber(baselineValue)) return null;
-  const frac = clamp01(expectedProgress / 100);
-  return krType === 'numeric_decrease' ? baselineValue - (baselineValue - targetValue) * frac : baselineValue + (targetValue - baselineValue) * frac;
-}
-
-/** "Expected Today" formatted the same way as the KR's `current`/`target` display strings. */
-export function computeExpectedValueDisplay(kr: KeyResult, expectedProgress: number): string | null {
-  const value = computeExpectedRawValue(kr, expectedProgress);
-  return value == null ? null : formatValueLikeTarget(kr, value);
 }
 
 // ---------- short labels ----------
