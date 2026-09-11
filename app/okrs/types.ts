@@ -46,8 +46,6 @@ export interface KeyResult {
   currentValue: number | null;
   target: string;
   targetValue: number | null;
-  baseline: string;
-  baselineValue: number | null;
   confidence: Confidence;
   blocker: string;
   nextAction: string;

@@ -12,13 +12,12 @@ import { computeKrProgress } from './utils';
 interface KrDrawerProps {
   kr: KeyResult | null;
   status: StatusValue;
-  expectedProgress: number;
   initialShowForm?: boolean;
   onClose: () => void;
   onSubmitUpdate: (submission: KrUpdateSubmission) => void;
 }
 
-export default function KrDrawer({ kr, status, expectedProgress, initialShowForm, onClose, onSubmitUpdate }: KrDrawerProps) {
+export default function KrDrawer({ kr, status, initialShowForm, onClose, onSubmitUpdate }: KrDrawerProps) {
   const [showForm, setShowForm] = useState(!!initialShowForm);
 
   if (!kr) return null;
@@ -63,12 +62,9 @@ export default function KrDrawer({ kr, status, expectedProgress, initialShowForm
           </div>
 
           <div>
-            <div className={styles.drawerProgressHeader}>
-              <span>Progress {progress}%</span>
-              <span>Expected {Math.round(expectedProgress)}%</span>
-            </div>
+            <div className={styles.drawerProgressHeader}>Progress {progress}%</div>
             <div style={{ marginTop: 8 }}>
-              <ProgressBar value={progress} status={status} expected={expectedProgress} height={7} />
+              <ProgressBar value={progress} status={status} height={7} />
             </div>
           </div>
 
@@ -122,9 +118,12 @@ export default function KrDrawer({ kr, status, expectedProgress, initialShowForm
 
           <div className={styles.updateSection}>
             {!showForm ? (
-              <button type="button" className={styles.updateTrigger} onClick={() => setShowForm(true)}>
-                KR aktualisieren
-              </button>
+              <>
+                <button type="button" className={styles.updateTrigger} onClick={() => setShowForm(true)}>
+                  KR aktualisieren
+                </button>
+                <div className={styles.updateHint}>Hier den aktuellen Stand eintragen.</div>
+              </>
             ) : (
               <UpdateKrForm kr={kr} onSubmit={handleSubmit} onCancel={() => setShowForm(false)} />
             )}

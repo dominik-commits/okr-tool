@@ -66,8 +66,6 @@ export default function ObjectivesManager() {
         currentValue: null,
         target: '',
         targetValue: null,
-        baseline: '',
-        baselineValue: null,
         confidence: 'Medium',
         blocker: '',
         nextAction: '',

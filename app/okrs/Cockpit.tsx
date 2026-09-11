@@ -133,7 +133,6 @@ export default function Cockpit() {
           key={selectedKr.id}
           kr={selectedKr}
           status={selectedStatus}
-          expectedProgress={expectedProgress}
           onClose={closeKr}
           onSubmitUpdate={(submission) => {
             if (selection) submitKrUpdate(selection.objectiveId, selection.krId, submission);

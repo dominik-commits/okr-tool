@@ -7,10 +7,9 @@ interface ProgressBarProps {
   /** Use the interactive accent color instead of a status color (e.g. the overall OKR Health bar). */
   accent?: boolean;
   height?: number;
-  expected?: number;
 }
 
-export default function ProgressBar({ value, status, accent, height = 6, expected }: ProgressBarProps) {
+export default function ProgressBar({ value, status, accent, height = 6 }: ProgressBarProps) {
   return (
     <div className={styles.progressTrack} style={{ height }}>
       <div
@@ -18,13 +17,6 @@ export default function ProgressBar({ value, status, accent, height = 6, expecte
         data-status={accent ? undefined : status}
         style={{ width: `${Math.min(value, 100)}%`, height }}
       />
-      {expected != null && (
-        <div
-          className={styles.progressExpected}
-          style={{ left: `${Math.min(expected, 100)}%`, height: height + 8 }}
-          title={`Erwarteter Fortschritt: ${Math.round(expected)}%`}
-        />
-      )}
     </div>
   );
 }

@@ -48,9 +48,9 @@ export default function UpdateKrForm({ kr, onSubmit, onCancel }: UpdateKrFormPro
         confidence,
         blocker,
         nextAction,
-        // Derive the display string from the same number/unit as baseline & target, instead of letting
-        // a separate free-text field drift out of sync with currentValue (that mismatch used to cause
-        // wildly wrong progress %, e.g. a value entered in absolute € while target reads "Mio. €").
+        // Derive the display string from the same number/unit as target, instead of letting a separate
+        // free-text field drift out of sync with currentValue (that mismatch used to cause wildly wrong
+        // progress %, e.g. a value entered in absolute € while target reads "Mio. €").
         current: parsed != null ? formatValueLikeTarget(kr, parsed) : kr.current,
         currentValue: parsed != null ? parsed : kr.currentValue,
       });
@@ -62,7 +62,7 @@ export default function UpdateKrForm({ kr, onSubmit, onCancel }: UpdateKrFormPro
         confidence,
         blocker,
         nextAction,
-        current: achieved ? kr.target || 'Erreicht' : kr.baseline || 'Offen',
+        current: achieved ? kr.target || 'Erreicht' : 'Offen',
         currentValue: null,
         progress: achieved ? 100 : 0,
       });
@@ -92,9 +92,7 @@ export default function UpdateKrForm({ kr, onSubmit, onCancel }: UpdateKrFormPro
             onChange={(e) => setNumericValue(e.target.value)}
             placeholder={kr.targetValue != null ? String(kr.targetValue) : '0'}
           />
-          <div className={styles.formHint}>
-            Gleiche Einheit wie Baseline/Target: {kr.baseline || '–'} → {kr.target || '–'}. Anzeige wird automatisch daraus erzeugt.
-          </div>
+          <div className={styles.formHint}>Gleiche Einheit wie Target ({kr.target || '–'}). Anzeige wird automatisch daraus erzeugt.</div>
         </div>
       )}
 

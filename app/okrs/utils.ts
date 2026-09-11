@@ -1,5 +1,5 @@
 import { CYCLE_DATE_RANGE, OVERDUE_DAYS_THRESHOLD, STATUS_OFF_GAP, STATUS_RISK_GAP } from './constants';
-import { CycleId, Initiative, KeyResult, Objective, StatusValue } from './types';
+import { CycleId, Initiative, KeyResult, KrType, Objective, StatusValue } from './types';
 
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10);
@@ -34,19 +34,23 @@ function isFiniteNumber(v: unknown): v is number {
 // ---------- progress / status ----------
 
 export function computeKrProgress(kr: KeyResult): number {
-  const { krType, currentValue, targetValue, baselineValue } = kr;
+  const { krType, currentValue, targetValue } = kr;
 
+  // "Reach X" — how far current is toward target.
   if (krType === 'numeric_increase' || krType === 'percentage') {
-    if (isFiniteNumber(currentValue) && isFiniteNumber(targetValue) && isFiniteNumber(baselineValue) && targetValue !== baselineValue) {
-      return clamp01((currentValue - baselineValue) / (targetValue - baselineValue)) * 100;
+    if (isFiniteNumber(currentValue) && isFiniteNumber(targetValue) && targetValue !== 0) {
+      return clamp01(currentValue / targetValue) * 100;
     }
   }
+  // "Reduce to X" — inverse ratio, since less is better here. Current at or below zero, or a
+  // target at or below zero, both count as fully achieved (there's nothing left to divide by).
   if (krType === 'numeric_decrease') {
-    if (isFiniteNumber(currentValue) && isFiniteNumber(targetValue) && isFiniteNumber(baselineValue) && baselineValue !== targetValue) {
-      return clamp01((baselineValue - currentValue) / (baselineValue - targetValue)) * 100;
+    if (isFiniteNumber(currentValue) && isFiniteNumber(targetValue)) {
+      if (currentValue <= 0 || targetValue <= 0) return 100;
+      return clamp01(targetValue / currentValue) * 100;
     }
   }
-  // milestone / binary / numeric types missing baseline+target: manually set progress is the source of truth
+  // milestone / binary / numeric types missing current+target: manually set progress is the source of truth
   return clamp01(Number(kr.progress || 0) / 100) * 100;
 }
 
@@ -199,7 +203,7 @@ function formatNumberDe(value: number, decimals: number): string {
 }
 
 /** Renders `value` in the same style as the KR's `target` display string (unit suffix + decimal precision). */
-export function formatValueLikeTarget(kr: KeyResult, value: number): string {
+export function formatValueLikeTarget(kr: Pick<KeyResult, 'target' | 'targetValue'>, value: number): string {
   const decimals = isFiniteNumber(kr.targetValue) && Math.abs(kr.targetValue) < 10 ? 2 : 0;
   const suffix = extractUnitSuffix(kr.target || '');
   const formatted = formatNumberDe(value, decimals);
@@ -222,7 +226,7 @@ export function deriveShortTitle(text: string, maxLength: number = 40): string {
 /**
  * Parses a German-formatted display string ("1,12", "24.600", "20 Mio. €", "+15 %") into its leading
  * numeric value. '.' is treated as a thousands separator, ',' as the decimal separator — matching how
- * every current/target/baseline string in this app is written. Returns null when nothing parses.
+ * every current/target string in this app is written. Returns null when nothing parses.
  */
 export function parseGermanNumber(display: string | null | undefined): number | null {
   if (!display) return null;
@@ -235,12 +239,23 @@ export function parseGermanNumber(display: string | null | undefined): number | 
 
 // ---------- migration (fills in cockpit fields on old saved data, keeps everything else) ----------
 
+const NUMERIC_KR_TYPE_SET = new Set<KrType>(['numeric_increase', 'numeric_decrease', 'percentage']);
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function migrateKeyResult(raw: any): KeyResult {
   const text = raw.text ?? '';
-  const current = raw.current ?? '';
   const target = raw.target ?? '';
-  const baseline = raw.baseline ?? '';
+  const krType: KrType = raw.krType ?? 'percentage';
+  const targetValue = isFiniteNumber(raw.targetValue) ? raw.targetValue : parseGermanNumber(target);
+  const currentValue = isFiniteNumber(raw.currentValue) ? raw.currentValue : parseGermanNumber(raw.current ?? '');
+
+  // For numeric KR types, `current` is never an independently stored value — it's always rendered
+  // fresh from currentValue, in lockstep with target. A free-text `current` that could drift out of
+  // sync with currentValue is exactly what used to make the progress % silently wrong (the display
+  // read one number while the computation used another). This also self-heals any KR whose display
+  // and value already went stale before this fix, the next time its state is loaded.
+  const current = NUMERIC_KR_TYPE_SET.has(krType) && isFiniteNumber(currentValue) ? formatValueLikeTarget({ target, targetValue }, currentValue) : raw.current ?? '';
+
   return {
     id: (raw.id as string) ?? uid(),
     text,
@@ -253,15 +268,11 @@ export function migrateKeyResult(raw: any): KeyResult {
     project: raw.project ?? '',
     history: Array.isArray(raw.history) ? raw.history : [],
     updates: Array.isArray(raw.updates) ? raw.updates : [],
-    krType: raw.krType ?? 'percentage',
-    // Keep the original display string untouched; only backfill the numeric fields used for progress
-    // calculation, and only when they're missing — never overwrite an already-migrated value.
+    krType,
     current,
-    currentValue: isFiniteNumber(raw.currentValue) ? raw.currentValue : parseGermanNumber(current),
+    currentValue,
     target,
-    targetValue: isFiniteNumber(raw.targetValue) ? raw.targetValue : parseGermanNumber(target),
-    baseline,
-    baselineValue: isFiniteNumber(raw.baselineValue) ? raw.baselineValue : parseGermanNumber(baseline),
+    targetValue,
     confidence: raw.confidence ?? 'Medium',
     blocker: raw.blocker ?? '',
     nextAction: raw.nextAction ?? '',

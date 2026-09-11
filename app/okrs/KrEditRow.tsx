@@ -14,7 +14,7 @@ export default function KrEditRow({ kr, onChange, onDelete }: KrEditRowProps) {
 
   function handleKrTypeChange(krType: KrType) {
     const stillNumeric = NUMERIC_KR_TYPES.includes(krType);
-    onChange(stillNumeric ? { krType } : { krType, currentValue: null, targetValue: null, baselineValue: null });
+    onChange(stillNumeric ? { krType } : { krType, currentValue: null, targetValue: null });
   }
 
   return (
@@ -66,21 +66,21 @@ export default function KrEditRow({ kr, onChange, onDelete }: KrEditRowProps) {
 
       <div className={styles.krEditValuesRow}>
         <div className={styles.krEditValueGroup}>
-          <label className={styles.formLabel}>Baseline</label>
+          <label className={styles.formLabel}>Aktueller Wert (Startwert)</label>
           <input
             type="text"
             className={styles.formInput}
-            value={kr.baseline}
+            value={kr.current}
             placeholder="z. B. 0 € oder Konzeptphase"
-            onChange={(e) => onChange({ baseline: e.target.value, baselineValue: isNumeric ? parseGermanNumber(e.target.value) : kr.baselineValue })}
+            onChange={(e) => onChange({ current: e.target.value, currentValue: isNumeric ? parseGermanNumber(e.target.value) : kr.currentValue })}
           />
           {isNumeric && (
             <input
               type="number"
               className={styles.formInput}
-              value={kr.baselineValue ?? ''}
+              value={kr.currentValue ?? ''}
               placeholder="Zahlenwert"
-              onChange={(e) => onChange({ baselineValue: e.target.value === '' ? null : Number(e.target.value) })}
+              onChange={(e) => onChange({ currentValue: e.target.value === '' ? null : Number(e.target.value) })}
             />
           )}
         </div>
@@ -104,6 +104,7 @@ export default function KrEditRow({ kr, onChange, onDelete }: KrEditRowProps) {
           )}
         </div>
       </div>
+      <div className={styles.krEditValuesHint}>Startwert bei Anlage — laufende Updates erfolgen im Cockpit.</div>
 
       <div className={styles.krEditMetaRow}>
         <div className={styles.krEditMetaField}>
