@@ -7,7 +7,7 @@ import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
 import UpdateKrForm, { KrUpdateSubmission } from './UpdateKrForm';
 import { KeyResult, StatusValue } from './types';
-import { computeExpectedValueDisplay, computeKrProgress, isoWeekLabel } from './utils';
+import { computeExpectedValueDisplay, computeKrProgress } from './utils';
 
 interface KrDrawerProps {
   kr: KeyResult | null;
@@ -25,8 +25,6 @@ export default function KrDrawer({ kr, status, expectedProgress, initialShowForm
 
   const progress = Math.round(computeKrProgress(kr));
   const expectedToday = computeExpectedValueDisplay(kr, expectedProgress) ?? `${Math.round(expectedProgress)}%`;
-  const recentHistory = (kr.history || []).slice(-4);
-  const maxHistory = Math.max(...recentHistory.map((h) => h.progress), 1);
   const lastUpdate = (kr.updates || [])[kr.updates.length - 1];
 
   function handleSubmit(submission: KrUpdateSubmission) {
@@ -78,26 +76,6 @@ export default function KrDrawer({ kr, status, expectedProgress, initialShowForm
               <ProgressBar value={progress} status={status} expected={expectedProgress} height={7} />
             </div>
           </div>
-
-          {recentHistory.length > 0 && (
-            <div>
-              <div className={styles.drawerFieldLabel} style={{ marginBottom: 8 }}>
-                Verlauf
-              </div>
-              <div className={styles.historyBars}>
-                {recentHistory.map((h, i) => (
-                  <div key={i} className={styles.historyBarCol}>
-                    <div
-                      className={styles.historyBar}
-                      data-status={status}
-                      style={{ height: `${Math.max((h.progress / maxHistory) * 100, 4)}%` }}
-                    />
-                    <span className={styles.historyBarLabel}>{isoWeekLabel(h.date)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div>
             <div className={styles.drawerFieldLabel} style={{ marginBottom: 6 }}>

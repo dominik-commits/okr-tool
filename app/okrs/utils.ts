@@ -103,12 +103,6 @@ export function computeObjectiveStatus(o: Objective, expectedProgress: number): 
   return 'on';
 }
 
-export function krTrend(kr: KeyResult): number {
-  const h = kr.history || [];
-  if (h.length < 2) return 0;
-  return Math.round(h[h.length - 1].progress - h[h.length - 2].progress);
-}
-
 /** Returns the decline magnitude if progress dropped on every one of the last `count` updates, else null. */
 export function consecutiveDeclineMagnitude(kr: KeyResult, count: number = 2): number | null {
   const h = kr.history || [];
@@ -230,29 +224,6 @@ export function computeExpectedValueDisplay(kr: KeyResult, expectedProgress: num
   return value == null ? null : formatValueLikeTarget(kr, value);
 }
 
-/**
- * A human-readable description of how far a KR is behind its expected pace — in the KR's own unit
- * for "count-like" targets (e.g. "3.100 Abonnenten hinter dem erwarteten Zielpfad"), or in progress
- * percentage points for ratio-like targets such as ROAS (e.g. "16 Prozentpunkte hinter Plan").
- */
-export function describeGap(kr: KeyResult, expectedProgress: number): string | null {
-  const progress = computeKrProgress(kr);
-  const gapPoints = Math.round(expectedProgress - progress);
-  if (gapPoints <= 0) return null;
-
-  const isRatioLike = kr.krType === 'percentage' || (isFiniteNumber(kr.targetValue) && Math.abs(kr.targetValue) < 10);
-  if (!isRatioLike) {
-    const expectedValue = computeExpectedRawValue(kr, expectedProgress);
-    if (expectedValue != null && isFiniteNumber(kr.currentValue)) {
-      const gapValue = Math.round(Math.abs(expectedValue - kr.currentValue));
-      const suffix = extractUnitSuffix(kr.target || '');
-      const gapDisplay = suffix ? `${formatNumberDe(gapValue, 0)} ${suffix}` : formatNumberDe(gapValue, 0);
-      return `${gapDisplay} hinter dem erwarteten Zielpfad`;
-    }
-  }
-  return `${gapPoints} Prozentpunkt${gapPoints === 1 ? '' : 'e'} hinter Plan`;
-}
-
 // ---------- short labels ----------
 
 /**
@@ -278,23 +249,6 @@ export function parseGermanNumber(display: string | null | undefined): number | 
   const normalized = match[0].includes(',') ? match[0].replace(/\./g, '').replace(',', '.') : match[0].replace(/\./g, '');
   const value = Number(normalized);
   return Number.isFinite(value) ? value : null;
-}
-
-// ---------- ISO week labels (for the drawer's history chart) ----------
-
-export function isoWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = (d.getUTCDay() + 6) % 7;
-  d.setUTCDate(d.getUTCDate() - dayNum + 3);
-  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
-  const diff = d.getTime() - firstThursday.getTime();
-  return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
-}
-
-export function isoWeekLabel(iso: string): string {
-  const d = isoDateToDate(iso);
-  if (!d) return iso;
-  return `KW${isoWeekNumber(d)}`;
 }
 
 // ---------- migration (fills in cockpit fields on old saved data, keeps everything else) ----------

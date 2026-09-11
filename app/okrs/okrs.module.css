@@ -60,22 +60,6 @@
   gap: 12px;
 }
 
-.backBtn {
-  display: flex;
-  align-items: center;
-  border-radius: 6px;
-  padding: 6px;
-  margin-left: -6px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.backBtn:hover {
-  color: var(--text);
-}
-
 .brand {
   color: var(--text);
   font-size: 17px;
@@ -284,12 +268,24 @@
 .insightHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   margin-bottom: 14px;
   color: var(--accent);
   font-size: 12.5px;
   font-weight: 500;
   letter-spacing: 0.02em;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+}
+
+.insightHeaderLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .insightCause {
@@ -308,113 +304,6 @@
 
 .insightRecommendationLabel {
   color: var(--faint);
-}
-
-/* ---------- your attention ---------- */
-
-.attentionSection {
-  margin-bottom: 24px;
-}
-
-.attentionGrid {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.attentionCard {
-  flex: 1;
-  min-width: 260px;
-  text-align: left;
-  border-radius: 12px;
-  padding: 20px 22px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.attentionCard:hover {
-  border-color: var(--faint);
-}
-
-.attentionTitle {
-  color: var(--text);
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.attentionObjLabel {
-  margin-top: 4px;
-  color: var(--faint);
-  font-size: 12px;
-}
-
-.attentionValues {
-  margin-top: 16px;
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-}
-
-.attentionValueLabel {
-  color: var(--faint);
-  font-size: 10.5px;
-}
-
-.attentionValueBig {
-  color: var(--text);
-  font-size: 18px;
-  margin-top: 2px;
-}
-
-.attentionValueSmall {
-  color: var(--muted);
-  font-size: 15px;
-  margin-top: 2px;
-}
-
-.attentionGap {
-  margin-top: 12px;
-  font-size: 13px;
-}
-
-.attentionGap[data-status='off'] {
-  color: var(--off);
-}
-
-.attentionGap[data-status='risk'] {
-  color: var(--risk);
-}
-
-.attentionTrendText {
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--faint);
-  font-size: 12px;
-}
-
-.attentionBody {
-  margin-top: 12px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.attentionChipRow {
-  margin-top: 16px;
-}
-
-.attentionUpdateCta {
-  display: inline-flex;
-  margin-top: 16px;
-  border-radius: 8px;
-  padding: 6px 14px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 12.5px;
-  font-weight: 500;
 }
 
 /* ---------- status chip ---------- */
@@ -517,7 +406,7 @@
   transform: translateY(-50%);
 }
 
-/* ---------- objective card (cockpit grid) ---------- */
+/* ---------- flat objective/KR overview (cockpit) ---------- */
 
 .emptyState {
   color: var(--muted);
@@ -530,209 +419,105 @@
   margin-bottom: 24px;
 }
 
-.objectiveGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+.flatList {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
   margin-bottom: 24px;
 }
 
-@media (max-width: 900px) {
-  .objectiveGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.objectiveCard {
-  text-align: left;
-  border-radius: 12px;
-  padding: 24px 26px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-family: inherit;
-  width: 100%;
-}
-
-.objectiveCard:hover {
-  border-color: var(--faint);
-}
-
-.objectiveCardTop {
+.flatObjectiveHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
 }
 
-.objectiveNum {
-  color: var(--faint);
-  font-size: 13px;
-}
-
-.objectiveCardTitle {
-  margin-top: 12px;
-  color: var(--text);
-  font-size: 16px;
-  line-height: 1.4;
-}
-
-.objectiveCardProgressRow {
-  margin-top: 18px;
-}
-
-.objectiveCardMetaRow {
-  margin-top: 8px;
+.flatObjectiveTitleRow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  color: var(--faint);
-  font-size: 12px;
+  gap: 10px;
 }
 
-.objectiveCardPct {
-  color: var(--text);
+.flatObjectiveNum {
+  color: var(--faint);
   font-size: 13px;
 }
 
-.objectiveCardAttention {
-  margin-top: 12px;
-  color: var(--risk);
-  font-size: 12.5px;
-}
-
-.objectiveCardProblem {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: 12.5px;
-}
-
-.objectiveCardProblemLabel {
-  color: var(--faint);
-}
-
-/* ---------- objective detail ---------- */
-
-.objDetailHead {
-  margin-bottom: 40px;
-}
-
-.objDetailId {
-  color: var(--faint);
-  font-size: 14px;
-}
-
-.objDetailTitle {
-  margin: 8px 0 0;
+.flatObjectiveTitle {
   color: var(--text);
-  font-size: 26px;
-  line-height: 1.4;
-  max-width: 640px;
+  font-size: 15.5px;
   font-weight: 500;
 }
 
-.objDetailStats {
-  margin-top: 24px;
-  display: flex;
-  align-items: center;
-  gap: 40px;
-  flex-wrap: wrap;
+.flatObjectivePct {
+  font-size: 15px;
 }
 
-.objDetailStatLabel {
-  color: var(--faint);
-  font-size: 12px;
-}
-
-.objDetailStatValue {
-  margin-top: 4px;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.objDetailStatValueBig {
-  margin-top: 4px;
-  color: var(--text);
-  font-size: 20px;
-}
-
-.objDetailStatValueBigMuted {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 20px;
-}
-
-.objDetailStatusWrap {
-  margin-top: 6px;
-}
-
-.objDetailBarWrap {
-  margin-top: 24px;
-  max-width: 480px;
-}
-
-/* ---------- KR list row (objective detail) ---------- */
-
-.krListWrap {
+.flatKrList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
 }
 
-.krListRow {
+.flatKrRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-radius: 12px;
-  padding: 16px 24px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 8px 10px 26px;
+  background: none;
+  border: none;
   cursor: pointer;
   font-family: inherit;
   text-align: left;
   width: 100%;
-  gap: 16px;
 }
 
-.krListRow:hover {
-  border-color: var(--faint);
+.flatKrRow:hover {
+  background: var(--surface);
 }
 
-.krListMain {
-  flex: 1;
-  min-width: 0;
-}
-
-.krListTitle {
+.flatKrName {
   color: var(--text);
-  font-size: 14.5px;
+  font-size: 13.5px;
 }
 
-.krListValues {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 12.5px;
+.flatKrPct {
+  font-size: 13.5px;
 }
 
-.krValueSep {
+.flatKrEmpty {
   color: var(--faint);
+  font-size: 12.5px;
+  padding: 10px 8px 10px 26px;
 }
 
-.krListRight {
-  display: flex;
+.statusValue {
+  display: inline-flex;
   align-items: center;
-  gap: 24px;
-  flex-shrink: 0;
+  gap: 5px;
 }
 
-.krListProgress {
-  width: 140px;
+.statusValue[data-status='on'] {
+  color: var(--on);
 }
 
-.krListPct {
-  color: var(--muted);
-  font-size: 13px;
-  width: 34px;
-  text-align: right;
+.statusValue[data-status='risk'] {
+  color: var(--risk);
+}
+
+.statusValue[data-status='off'] {
+  color: var(--off);
+}
+
+.statusValue[data-status='needs_update'] {
+  color: var(--needs-update);
+}
+
+.statusValue[data-status='not_started'] {
+  color: var(--not-started);
 }
 
 /* ---------- drawer ---------- */
@@ -847,54 +632,6 @@
   color: var(--text);
   margin-top: 4px;
   font-size: 12.5px;
-}
-
-.historyBars {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  height: 64px;
-}
-
-.historyBarCol {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  height: 100%;
-  justify-content: flex-end;
-}
-
-.historyBar {
-  width: 100%;
-  border-radius: 2px;
-  opacity: 0.85;
-}
-
-.historyBar[data-status='on'] {
-  background: var(--on);
-}
-
-.historyBar[data-status='risk'] {
-  background: var(--risk);
-}
-
-.historyBar[data-status='off'] {
-  background: var(--off);
-}
-
-.historyBar[data-status='needs_update'] {
-  background: var(--needs-update);
-}
-
-.historyBar[data-status='not_started'] {
-  background: var(--not-started);
-}
-
-.historyBarLabel {
-  color: var(--faint);
-  font-size: 10px;
 }
 
 .lastUpdateBox {

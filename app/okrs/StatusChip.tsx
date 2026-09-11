@@ -3,7 +3,7 @@ import styles from './okrs.module.css';
 import { STATUS_LABEL } from './constants';
 import { StatusValue } from './types';
 
-const STATUS_ICON: Record<StatusValue, typeof CheckCircle2> = {
+export const STATUS_ICON: Record<StatusValue, typeof CheckCircle2> = {
   on: CheckCircle2,
   risk: AlertTriangle,
   off: XCircle,

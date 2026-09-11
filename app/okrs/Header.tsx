@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
 import LogoutButton from '../../components/LogoutButton';
 import styles from './okrs.module.css';
 import { CYCLES, NAV_ITEMS } from './constants';
@@ -13,13 +12,11 @@ const NAV_HREF: Partial<Record<(typeof NAV_ITEMS)[number], string>> = {
 interface HeaderProps {
   activeNav: 'Cockpit' | 'Objectives';
   showTopControls: boolean;
-  showBack?: boolean;
-  onBack?: () => void;
   activeCycle: CycleId;
   onCycleChange: (id: CycleId) => void;
 }
 
-export default function Header({ activeNav, showTopControls, showBack, onBack, activeCycle, onCycleChange }: HeaderProps) {
+export default function Header({ activeNav, showTopControls, activeCycle, onCycleChange }: HeaderProps) {
   const cycleIndex = CYCLES.findIndex((c) => c.id === activeCycle);
   const cycleLabel = CYCLES[cycleIndex]?.label ?? '';
 
@@ -31,11 +28,6 @@ export default function Header({ activeNav, showTopControls, showBack, onBack, a
   return (
     <div className={styles.header}>
       <div className={styles.headerLeft}>
-        {showBack && (
-          <button type="button" className={styles.backBtn} onClick={onBack} aria-label="Zurück">
-            <ArrowLeft size={16} />
-          </button>
-        )}
         <span className={styles.brand}>OKR Command Center</span>
         <nav className={styles.nav}>
           {NAV_ITEMS.map((item) => {
