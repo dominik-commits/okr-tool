@@ -2,30 +2,31 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styles from './okrs.module.css';
-import TopNav from './TopNav';
-import QuarterSelector from './QuarterSelector';
-import KpiCard from './KpiCard';
-import AttentionRow from './AttentionRow';
+import Header from './Header';
+import OkrHealth from './OkrHealth';
+import ManagementInsightPanel from './ManagementInsightPanel';
+import YourAttention from './YourAttention';
 import ObjectiveCard from './ObjectiveCard';
-import AiInsightsPanel from './AiInsightsPanel';
+import ObjectiveDetailView from './ObjectiveDetailView';
 import KrDrawer from './KrDrawer';
 import { KrUpdateSubmission } from './UpdateKrForm';
-import { buildInsights } from './aiInsights';
-import { EMPTY_STATE, SEED_H2_2026_ID } from './constants';
+import { AttentionItem, buildAttentionItems } from './attention';
+import { buildManagementInsight } from './managementInsight';
+import { CYCLES, EMPTY_STATE, SEED_H2_2026_ID } from './constants';
 import { seedH2_2026 } from './seed';
 import {
   clone,
   computeKrProgress,
   computeKrStatus,
+  computeObjectiveStatus,
   expectedProgressForCycle,
-  krIsOverdue,
   migrateObjective,
   overallScore,
   todayISO,
   todayStr,
   uid,
 } from './utils';
-import { CycleId, KeyResult, Objective, OkrState } from './types';
+import { CycleId, KeyResult, Objective, OkrState, StatusValue } from './types';
 
 function applySeeds(draft: OkrState): boolean {
   if (!draft.seeds) draft.seeds = [];
@@ -56,14 +57,18 @@ function recordHistory(draft: OkrState): void {
   if (hist.length > 90) hist.splice(0, hist.length - 90);
 }
 
+type Screen = { type: 'cockpit' } | { type: 'objective'; objectiveId: string };
+
 interface Selection {
   objectiveId: string;
   krId: string;
+  openForm: boolean;
 }
 
 export default function Cockpit() {
   const [state, setState] = useState<OkrState>(EMPTY_STATE);
   const [status, setStatus] = useState('Lädt…');
+  const [screen, setScreen] = useState<Screen>({ type: 'cockpit' });
   const [selection, setSelection] = useState<Selection | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const loaded = useRef(false);
@@ -136,9 +141,26 @@ export default function Cockpit() {
   }, [scheduleSave]);
 
   function setActiveCycle(id: CycleId) {
+    setScreen({ type: 'cockpit' });
     mutate((draft) => {
       draft.activeCycle = id;
     });
+  }
+
+  function openObjective(objectiveId: string) {
+    setScreen({ type: 'objective', objectiveId });
+  }
+
+  function backToCockpit() {
+    setScreen({ type: 'cockpit' });
+  }
+
+  function openKr(objectiveId: string, krId: string, openForm = false) {
+    setSelection({ objectiveId, krId, openForm });
+  }
+
+  function closeKr() {
+    setSelection(null);
   }
 
   function submitKrUpdate(objectiveId: string, krId: string, submission: KrUpdateSubmission) {
@@ -175,107 +197,80 @@ export default function Cockpit() {
 
   const objectives = state.objectives[state.activeCycle] || [];
   const expectedProgress = useMemo(() => expectedProgressForCycle(state.activeCycle), [state.activeCycle]);
+  const cycleLabel = CYCLES.find((c) => c.id === state.activeCycle)?.label ?? '';
   const overall = Math.round(overallScore(objectives));
 
-  const flatKrs = useMemo(
-    () => objectives.flatMap((o) => o.krs.map((kr) => ({ kr, obj: o }))),
-    [objectives]
-  );
+  const flatKrs = useMemo(() => objectives.flatMap((o) => o.krs), [objectives]);
+  const krNeedingAttention = flatKrs.filter((kr) => {
+    const s = computeKrStatus(kr, expectedProgress);
+    return s === 'off' || s === 'risk' || s === 'needs_update';
+  }).length;
 
-  const onCount = flatKrs.filter(({ kr }) => computeKrStatus(kr, expectedProgress) === 'on').length;
-  const riskCount = flatKrs.filter(({ kr }) => computeKrStatus(kr, expectedProgress) === 'risk').length;
-  const offCount = flatKrs.filter(({ kr }) => computeKrStatus(kr, expectedProgress) === 'off').length;
-  const overdueCount = flatKrs.filter(({ kr }) => krIsOverdue(kr)).length;
-
-  const attention = flatKrs
-    .filter(({ kr }) => {
-      const s = computeKrStatus(kr, expectedProgress);
-      return s === 'risk' || s === 'off';
-    })
-    .sort((a, b) => {
-      const sa = computeKrStatus(a.kr, expectedProgress);
-      const sb = computeKrStatus(b.kr, expectedProgress);
-      if (sa === sb) return 0;
-      return sa === 'off' ? -1 : 1;
+  const objectiveBreakdown = useMemo(() => {
+    const counts: Partial<Record<StatusValue, number>> = {};
+    objectives.forEach((o) => {
+      const s = computeObjectiveStatus(o, expectedProgress);
+      counts[s] = (counts[s] || 0) + 1;
     });
+    return counts;
+  }, [objectives, expectedProgress]);
 
-  const insights = useMemo(() => buildInsights(objectives, expectedProgress), [objectives, expectedProgress]);
+  const attentionItems = useMemo(() => buildAttentionItems(objectives, expectedProgress), [objectives, expectedProgress]);
+  const managementInsight = useMemo(() => buildManagementInsight(objectives, expectedProgress), [objectives, expectedProgress]);
 
-  function openKr(obj: Objective, kr: KeyResult) {
-    setSelection({ objectiveId: obj.id, krId: kr.id });
-  }
+  const currentObjectiveIndex = screen.type === 'objective' ? objectives.findIndex((o) => o.id === screen.objectiveId) : -1;
+  const currentObjective = currentObjectiveIndex >= 0 ? objectives[currentObjectiveIndex] : undefined;
 
   const selectedObjective = selection ? objectives.find((o) => o.id === selection.objectiveId) : undefined;
   const selectedKr = selectedObjective && selection ? selectedObjective.krs.find((k) => k.id === selection.krId) : undefined;
-  const selectedStatus = selectedKr ? computeKrStatus(selectedKr, expectedProgress) : 'nodata';
+  const selectedStatus = selectedKr ? computeKrStatus(selectedKr, expectedProgress) : 'not_started';
+
+  function handleAttentionOpen(item: AttentionItem) {
+    openKr(item.objective.id, item.kr.id, item.status === 'needs_update');
+  }
+
+  function handleKrRowOpen(kr: KeyResult) {
+    if (!currentObjective) return;
+    openKr(currentObjective.id, kr.id);
+  }
 
   return (
     <div className={styles.cockpit}>
       <div className={styles.inner}>
-        <TopNav />
+        <Header onCockpit={screen.type === 'cockpit'} onBack={backToCockpit} activeCycle={state.activeCycle} onCycleChange={setActiveCycle} />
 
-        <div className={styles.headerRow}>
-          <QuarterSelector activeCycle={state.activeCycle} onChange={setActiveCycle} />
-          <div className={styles.filterGroup}>
-            {['Department', 'Owner', 'Status'].map((f) => (
-              <button key={f} type="button" className={styles.filterBtn}>
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {objectives.length === 0 ? (
-          <div className={styles.emptyQuarter}>Für diesen Zyklus liegen noch keine Objectives vor.</div>
-        ) : (
+        {screen.type === 'cockpit' ? (
           <>
-            <div className={styles.kpiRow}>
-              <KpiCard label="Overall Progress" value={`${overall}%`} sub="gewichtet über alle Objectives" color="var(--accent)" />
-              <KpiCard label="On Track Key Results" value={onCount} sub={`von ${flatKrs.length} Key Results`} color="var(--on)" />
-              <KpiCard label="At Risk Key Results" value={riskCount} sub="benötigen Beobachtung" color="var(--risk)" />
-              <KpiCard label="Overdue Updates" value={overdueCount} sub="seit über 7 Tagen kein Update" color="var(--off)" />
-            </div>
+            <OkrHealth
+              overall={overall}
+              cycleLabel={cycleLabel}
+              objectiveBreakdown={objectiveBreakdown}
+              objectiveCount={objectives.length}
+              krCount={flatKrs.length}
+              krNeedingAttention={krNeedingAttention}
+            />
+            <ManagementInsightPanel insight={managementInsight} />
+            <YourAttention items={attentionItems} expectedProgress={expectedProgress} onOpen={handleAttentionOpen} />
 
-            <div className={styles.layoutGrid}>
-              <div className={styles.mainCol}>
-                {attention.length > 0 && (
-                  <div>
-                    <div className={styles.sectionHeader}>
-                      <span className={styles.sectionTitle}>Attention Required</span>
-                      <span className={styles.sectionCount}>{attention.length} Key Results</span>
-                    </div>
-                    <div className={styles.attentionList}>
-                      {attention.map(({ kr, obj }) => (
-                        <AttentionRow
-                          key={kr.id}
-                          kr={kr}
-                          status={computeKrStatus(kr, expectedProgress)}
-                          onOpen={() => openKr(obj, kr)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className={styles.objectiveList}>
-                  {objectives.map((o, i) => (
-                    <ObjectiveCard
-                      key={o.id}
-                      objective={o}
-                      index={i}
-                      expectedProgress={expectedProgress}
-                      onOpenKr={(kr) => openKr(o, kr)}
-                    />
-                  ))}
-                </div>
+            <div className={styles.sectionTitle}>Objectives</div>
+            {objectives.length === 0 ? (
+              <div className={styles.emptyState}>Für diesen Zyklus liegen noch keine Objectives vor.</div>
+            ) : (
+              <div className={styles.objectiveGrid}>
+                {objectives.map((o, i) => (
+                  <ObjectiveCard key={o.id} objective={o} index={i} expectedProgress={expectedProgress} onOpen={() => openObjective(o.id)} />
+                ))}
               </div>
-
-              <div className={styles.sideCol}>
-                <AiInsightsPanel insights={insights} />
-              </div>
-            </div>
+            )}
           </>
-        )}
+        ) : currentObjective ? (
+          <ObjectiveDetailView
+            objective={currentObjective}
+            index={currentObjectiveIndex}
+            expectedProgress={expectedProgress}
+            onOpenKr={handleKrRowOpen}
+          />
+        ) : null}
 
         <div className={styles.footer}>
           <span className={styles.saveStatus}>{status}</span>
@@ -284,10 +279,12 @@ export default function Cockpit() {
 
       {selectedKr && (
         <KrDrawer
+          key={selectedKr.id}
           kr={selectedKr}
           status={selectedStatus}
           expectedProgress={expectedProgress}
-          onClose={() => setSelection(null)}
+          initialShowForm={selection?.openForm}
+          onClose={closeKr}
           onSubmitUpdate={(submission) => {
             if (selection) submitKrUpdate(selection.objectiveId, selection.krId, submission);
           }}

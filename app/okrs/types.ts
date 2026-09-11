@@ -1,4 +1,4 @@
-export type StatusValue = 'on' | 'risk' | 'off' | 'nodata';
+export type StatusValue = 'on' | 'risk' | 'off' | 'needs_update' | 'not_started';
 
 export type CycleId = 'c2026h2' | 'c2027h1' | 'c2027h2';
 
@@ -27,6 +27,8 @@ export interface UpdateEntry {
 export interface KeyResult {
   id: string;
   text: string;
+  /** Short label for compact displays (cockpit cards, attention list). Falls back to a truncated `text`. */
+  shortTitle: string;
   weight: number;
   /** Manually-set fallback progress (0-100). For numeric KR types this is overridden by computeKrProgress(). */
   progress: number;
@@ -55,6 +57,8 @@ export interface KeyResult {
 export interface Objective {
   id: string;
   title: string;
+  /** Short label for compact displays (cockpit cards, attention list). Falls back to a truncated `title`. */
+  shortTitle: string;
   weight: number;
   owner: string;
   krs: KeyResult[];

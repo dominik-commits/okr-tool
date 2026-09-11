@@ -7,24 +7,27 @@ import ProgressBar from './ProgressBar';
 import StatusChip from './StatusChip';
 import UpdateKrForm, { KrUpdateSubmission } from './UpdateKrForm';
 import { KeyResult, StatusValue } from './types';
-import { computeKrProgress, formatLastUpdateLabel } from './utils';
+import { computeExpectedValueDisplay, computeKrProgress, isoWeekLabel } from './utils';
 
 interface KrDrawerProps {
   kr: KeyResult | null;
   status: StatusValue;
   expectedProgress: number;
+  initialShowForm?: boolean;
   onClose: () => void;
   onSubmitUpdate: (submission: KrUpdateSubmission) => void;
 }
 
-export default function KrDrawer({ kr, status, expectedProgress, onClose, onSubmitUpdate }: KrDrawerProps) {
-  const [showForm, setShowForm] = useState(false);
+export default function KrDrawer({ kr, status, expectedProgress, initialShowForm, onClose, onSubmitUpdate }: KrDrawerProps) {
+  const [showForm, setShowForm] = useState(!!initialShowForm);
 
   if (!kr) return null;
 
   const progress = Math.round(computeKrProgress(kr));
-  const history = kr.history || [];
-  const maxHistory = Math.max(...history.map((h) => h.progress), 1);
+  const expectedToday = computeExpectedValueDisplay(kr, expectedProgress) ?? `${Math.round(expectedProgress)}%`;
+  const recentHistory = (kr.history || []).slice(-4);
+  const maxHistory = Math.max(...recentHistory.map((h) => h.progress), 1);
+  const lastUpdate = (kr.updates || [])[kr.updates.length - 1];
 
   function handleSubmit(submission: KrUpdateSubmission) {
     onSubmitUpdate(submission);
@@ -47,18 +50,22 @@ export default function KrDrawer({ kr, status, expectedProgress, onClose, onSubm
 
         <div className={styles.drawerBody}>
           <div className={styles.drawerStatusRow}>
-            <StatusChip status={status} size="md" />
-            {status !== 'nodata' && <span className={styles.confidenceNote}>Confidence: {kr.confidence}</span>}
+            <StatusChip status={status} size="lg" />
+            {status !== 'not_started' && <span className={styles.confidenceNote}>Confidence: {kr.confidence}</span>}
           </div>
 
-          <div className={styles.drawerGrid2}>
+          <div className={styles.drawerGrid3}>
             <div>
               <div className={styles.drawerFieldLabel}>Current</div>
               <div className={`${styles.drawerFieldValue} ${styles.mono}`}>{kr.current || '–'}</div>
             </div>
             <div>
+              <div className={styles.drawerFieldLabel}>Expected Today</div>
+              <div className={`${styles.drawerFieldValueMuted} ${styles.mono}`}>{expectedToday}</div>
+            </div>
+            <div>
               <div className={styles.drawerFieldLabel}>Target</div>
-              <div className={`${styles.drawerFieldValue} ${styles.mono}`}>{kr.target || '–'}</div>
+              <div className={`${styles.drawerFieldValueMuted} ${styles.mono}`}>{kr.target || '–'}</div>
             </div>
           </div>
 
@@ -72,35 +79,40 @@ export default function KrDrawer({ kr, status, expectedProgress, onClose, onSubm
             </div>
           </div>
 
-          {history.length > 0 && (
+          {recentHistory.length > 0 && (
             <div>
               <div className={styles.drawerFieldLabel} style={{ marginBottom: 8 }}>
                 Verlauf
               </div>
               <div className={styles.historyBars}>
-                {history.map((h, i) => (
+                {recentHistory.map((h, i) => (
                   <div key={i} className={styles.historyBarCol}>
                     <div
                       className={styles.historyBar}
                       data-status={status}
                       style={{ height: `${Math.max((h.progress / maxHistory) * 100, 4)}%` }}
                     />
-                    <span className={styles.historyBarLabel}>{h.date.slice(5).replace('-', '.')}</span>
+                    <span className={styles.historyBarLabel}>{isoWeekLabel(h.date)}</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          <div className={styles.drawerGrid2}>
-            <div>
-              <div className={styles.drawerMetaLabel}>Owner</div>
-              <div className={styles.drawerMetaValue}>{kr.owner || '—'}</div>
+          <div>
+            <div className={styles.drawerFieldLabel} style={{ marginBottom: 6 }}>
+              Letztes Update
             </div>
-            <div>
-              <div className={styles.drawerMetaLabel}>Letztes Update</div>
-              <div className={styles.drawerMetaValue}>{formatLastUpdateLabel(kr)}</div>
-            </div>
+            {lastUpdate ? (
+              <div className={styles.lastUpdateBox}>
+                <div className={styles.lastUpdateMeta}>
+                  {lastUpdate.date} · {kr.owner || 'Unbekannt'}
+                </div>
+                <div className={styles.lastUpdateText}>{lastUpdate.text}</div>
+              </div>
+            ) : (
+              <div className={styles.drawerMetaValue}>Noch kein Update.</div>
+            )}
           </div>
 
           {kr.blocker && (
@@ -135,29 +147,10 @@ export default function KrDrawer({ kr, status, expectedProgress, onClose, onSubm
             </div>
           )}
 
-          {kr.updates && kr.updates.length > 0 && (
-            <div>
-              <div className={styles.drawerFieldLabel} style={{ marginBottom: 8 }}>
-                Update-Log
-              </div>
-              <div className={styles.initiativesList}>
-                {kr.updates
-                  .slice()
-                  .reverse()
-                  .map((u) => (
-                    <div className={styles.initiativeRow} key={u.id}>
-                      <span className={styles.initiativeName}>{u.text}</span>
-                      <span className={styles.initiativeStatus}>{u.date}</span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
-
           <div className={styles.updateSection}>
             {!showForm ? (
               <button type="button" className={styles.updateTrigger} onClick={() => setShowForm(true)}>
-                Update KR
+                KR aktualisieren
               </button>
             ) : (
               <UpdateKrForm kr={kr} onSubmit={handleSubmit} onCancel={() => setShowForm(false)} />

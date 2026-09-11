@@ -83,20 +83,24 @@ export function krHasAnyUpdate(kr: KeyResult): boolean {
 }
 
 export function computeKrStatus(kr: KeyResult, expectedProgress: number): StatusValue {
-  if (!krHasAnyUpdate(kr)) return 'nodata';
+  if (!krHasAnyUpdate(kr)) return 'not_started';
+  if (krIsOverdue(kr)) return 'needs_update';
   const gap = computeKrProgress(kr) - expectedProgress;
   if (gap < -STATUS_OFF_GAP) return 'off';
   if (gap < -STATUS_RISK_GAP) return 'risk';
   return 'on';
 }
 
-const OBJECTIVE_STATUS_RANK: Record<StatusValue, number> = { off: 0, risk: 1, nodata: 2, on: 3 };
-
 export function computeObjectiveStatus(o: Objective, expectedProgress: number): StatusValue {
-  if (!o.krs.length) return 'nodata';
+  if (!o.krs.length) return 'not_started';
   const statuses = o.krs.map((k) => computeKrStatus(k, expectedProgress));
-  if (statuses.every((s) => s === 'nodata')) return 'nodata';
-  return statuses.reduce((worst, s) => (OBJECTIVE_STATUS_RANK[s] < OBJECTIVE_STATUS_RANK[worst] ? s : worst));
+  if (statuses.every((s) => s === 'not_started')) return 'not_started';
+  // Stale data undermines any performance read on the objective, so it takes priority over off/risk.
+  if (statuses.some((s) => s === 'needs_update')) return 'needs_update';
+  const gap = objProgress(o) - expectedProgress;
+  if (gap < -STATUS_OFF_GAP) return 'off';
+  if (gap < -STATUS_RISK_GAP) return 'risk';
+  return 'on';
 }
 
 export function krTrend(kr: KeyResult): number {
@@ -156,6 +160,29 @@ export function krIsOverdue(kr: KeyResult, thresholdDays: number = OVERDUE_DAYS_
   return daysSince(last, now) > thresholdDays;
 }
 
+const DE_MONTHS = [
+  'Januar',
+  'Februar',
+  'März',
+  'April',
+  'Mai',
+  'Juni',
+  'Juli',
+  'August',
+  'September',
+  'Oktober',
+  'November',
+  'Dezember',
+];
+
+/** Next occurrence of a weekday (0=Sun..6=Sat), formatted as "16. September". Used as a placeholder "next review" date. */
+export function nextWeekdayLabel(targetDow: number = 2, now: Date = new Date()): string {
+  const d = new Date(now);
+  const diff = (targetDow - d.getDay() + 7) % 7 || 7;
+  d.setDate(d.getDate() + diff);
+  return `${d.getDate()}. ${DE_MONTHS[d.getMonth()]}`;
+}
+
 export function formatLastUpdateLabel(kr: KeyResult, now: Date = new Date()): string {
   const last = krLastUpdateDate(kr);
   if (!last) return 'Noch kein Update';
@@ -165,13 +192,102 @@ export function formatLastUpdateLabel(kr: KeyResult, now: Date = new Date()): st
   return `vor ${days} Tagen`;
 }
 
+// ---------- value formatting (Current / Expected Today / Target) ----------
+
+/** Splits a display string like "20 Mio. €" into its unit suffix ("Mio. €"). */
+function extractUnitSuffix(display: string): string {
+  const match = display.match(/^[-+]?[\d.,]+\s*(.*)$/);
+  return match ? match[1] : '';
+}
+
+function formatNumberDe(value: number, decimals: number): string {
+  return value.toLocaleString('de-DE', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+/** Renders `value` in the same style as the KR's `target` display string (unit suffix + decimal precision). */
+export function formatValueLikeTarget(kr: KeyResult, value: number): string {
+  const decimals = isFiniteNumber(kr.targetValue) && Math.abs(kr.targetValue) < 10 ? 2 : 0;
+  const suffix = extractUnitSuffix(kr.target || '');
+  const formatted = formatNumberDe(value, decimals);
+  return suffix ? `${formatted} ${suffix}` : formatted;
+}
+
+/**
+ * The value (in the KR's own unit) that would be "on pace" today, interpolated between baseline and
+ * target using the cycle's time-based expected progress. Null when there's no numeric baseline/target
+ * to interpolate between (milestone/binary types) — callers should show the expected % instead.
+ */
+export function computeExpectedRawValue(kr: KeyResult, expectedProgress: number): number | null {
+  const { krType, targetValue, baselineValue } = kr;
+  if (!isFiniteNumber(targetValue) || !isFiniteNumber(baselineValue)) return null;
+  const frac = clamp01(expectedProgress / 100);
+  return krType === 'numeric_decrease' ? baselineValue - (baselineValue - targetValue) * frac : baselineValue + (targetValue - baselineValue) * frac;
+}
+
+/** "Expected Today" formatted the same way as the KR's `current`/`target` display strings. */
+export function computeExpectedValueDisplay(kr: KeyResult, expectedProgress: number): string | null {
+  const value = computeExpectedRawValue(kr, expectedProgress);
+  return value == null ? null : formatValueLikeTarget(kr, value);
+}
+
+/**
+ * A human-readable description of how far a KR is behind its expected pace — in the KR's own unit
+ * for "count-like" targets (e.g. "3.100 Abonnenten hinter dem erwarteten Zielpfad"), or in progress
+ * percentage points for ratio-like targets such as ROAS (e.g. "16 Prozentpunkte hinter Plan").
+ */
+export function describeGap(kr: KeyResult, expectedProgress: number): string | null {
+  const progress = computeKrProgress(kr);
+  const gapPoints = Math.round(expectedProgress - progress);
+  if (gapPoints <= 0) return null;
+
+  const isRatioLike = kr.krType === 'percentage' || (isFiniteNumber(kr.targetValue) && Math.abs(kr.targetValue) < 10);
+  if (!isRatioLike) {
+    const expectedValue = computeExpectedRawValue(kr, expectedProgress);
+    if (expectedValue != null && isFiniteNumber(kr.currentValue)) {
+      const gapValue = Math.round(Math.abs(expectedValue - kr.currentValue));
+      const suffix = extractUnitSuffix(kr.target || '');
+      const gapDisplay = suffix ? `${formatNumberDe(gapValue, 0)} ${suffix}` : formatNumberDe(gapValue, 0);
+      return `${gapDisplay} hinter dem erwarteten Zielpfad`;
+    }
+  }
+  return `${gapPoints} Prozentpunkt${gapPoints === 1 ? '' : 'e'} hinter Plan`;
+}
+
+// ---------- short labels ----------
+
+/** Derives a compact label from a longer sentence (splits on em-dash/period, then truncates). */
+export function deriveShortTitle(text: string, maxLength: number = 40): string {
+  const firstClause = (text || '').split(' — ')[0].split('. ')[0].trim();
+  if (firstClause.length <= maxLength) return firstClause;
+  return `${firstClause.slice(0, maxLength - 1).trim()}…`;
+}
+
+// ---------- ISO week labels (for the drawer's history chart) ----------
+
+export function isoWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const diff = d.getTime() - firstThursday.getTime();
+  return 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
+}
+
+export function isoWeekLabel(iso: string): string {
+  const d = isoDateToDate(iso);
+  if (!d) return iso;
+  return `KW${isoWeekNumber(d)}`;
+}
+
 // ---------- migration (fills in cockpit fields on old saved data, keeps everything else) ----------
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function migrateKeyResult(raw: any): KeyResult {
+  const text = raw.text ?? '';
   return {
     id: (raw.id as string) ?? uid(),
-    text: raw.text ?? '',
+    text,
+    shortTitle: raw.shortTitle || deriveShortTitle(text, 28),
     weight: Number(raw.weight) || 0,
     progress: Number(raw.progress) || 0,
     owner: raw.owner ?? '',
@@ -196,9 +312,11 @@ export function migrateKeyResult(raw: any): KeyResult {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function migrateObjective(raw: any): Objective {
+  const title = raw.title ?? '';
   return {
     id: (raw.id as string) ?? uid(),
-    title: raw.title ?? '',
+    title,
+    shortTitle: raw.shortTitle || deriveShortTitle(title, 24),
     weight: Number(raw.weight) || 0,
     owner: raw.owner ?? '',
     krs: Array.isArray(raw.krs) ? raw.krs.map(migrateKeyResult) : [],

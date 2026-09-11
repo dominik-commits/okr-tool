@@ -17,6 +17,7 @@ function update(daysAgo: number, text: string): UpdateEntry[] {
 
 interface KrSeed {
   text: string;
+  shortTitle: string;
   weight: number;
   krType: KrType;
   current: string;
@@ -40,6 +41,7 @@ function kr(seed: KrSeed): KeyResult {
   return {
     id: uid(),
     text: seed.text,
+    shortTitle: seed.shortTitle,
     weight: seed.weight,
     progress: seed.progress ?? 0,
     owner: seed.owner ?? '',
@@ -62,18 +64,20 @@ function kr(seed: KrSeed): KeyResult {
   };
 }
 
-function okr(title: string, weight: number, owner: string, krs: KeyResult[]): Objective {
-  return { id: uid(), title, weight, owner, krs, expandedUpdates: {} };
+function okr(title: string, shortTitle: string, weight: number, owner: string, krs: KeyResult[]): Objective {
+  return { id: uid(), title, shortTitle, weight, owner, krs, expandedUpdates: {} };
 }
 
 export function seedH2_2026(): Objective[] {
   const o1 = okr(
     'Marketing wird zum wichtigsten Wachstumstreiber für Neukunden. — Marketing muss einen signifikanten Beitrag zum Unternehmensziel von 20 Mio. € leisten.',
+    'Neukundenwachstum',
     40,
     'Dominik Kümmel',
     [
       kr({
         text: 'Marketing generiert ≥ 20 Mio. € attribuierten Umsatz bis Ende 2026',
+        shortTitle: 'Marketing Revenue',
         weight: 18,
         krType: 'numeric_increase',
         current: '9,0 Mio. €',
@@ -96,6 +100,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Performance Marketing steigert den monatlichen Umsatz auf 500.000 € bis 12/26',
+        shortTitle: 'Performance Marketing Revenue',
         weight: 10,
         krType: 'numeric_increase',
         current: '225.000 €',
@@ -118,6 +123,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'ROAS beträgt kanalübergreifend ≥ 1,4',
+        shortTitle: 'ROAS',
         weight: 7,
         krType: 'numeric_increase',
         current: '1,11',
@@ -145,6 +151,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Mindestens 500.000 € des Neukundenumsatzes stammen aus nicht bezahlten Kanälen (SEO, Newsletter, Referral, YT, Social)',
+        shortTitle: 'Umsatz aus nicht bezahlten Kanälen',
         weight: 5,
         krType: 'numeric_increase',
         current: '230.000 €',
@@ -170,11 +177,13 @@ export function seedH2_2026(): Objective[] {
 
   const o2 = okr(
     'Marketing erhöht den Customer Lifetime Value bestehender Kunden. — Marketing endet nicht beim Kauf.',
+    'Customer Lifetime Value',
     28,
     'Fredrik',
     [
       kr({
         text: 'Monatlicher Bestandskundenumsatz wird um mindestens 15 % gesteigert',
+        shortTitle: 'Bestandskundenumsatz',
         weight: 17,
         krType: 'percentage',
         current: '+6,5 %',
@@ -197,6 +206,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Winback-Kampagnen erzielen ≥ 40 % Reaktivierungsquote',
+        shortTitle: 'Winback-Reaktivierungsquote',
         weight: 7,
         krType: 'percentage',
         current: '12 %',
@@ -220,6 +230,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Mindestens 30 % der Kunden kaufen innerhalb von 3 Monaten ein weiteres Produkt',
+        shortTitle: 'Folgekauf-Quote',
         weight: 4,
         krType: 'percentage',
         current: '8 %',
@@ -244,11 +255,13 @@ export function seedH2_2026(): Objective[] {
 
   const o3 = okr(
     'HKCM wird zur sichtbarsten Investmentmarke im deutschsprachigen Raum. — Das zahlt auf langfristiges Wachstum ein.',
+    'Markensichtbarkeit',
     14,
     'Creator / W&U',
     [
       kr({
         text: '600 Mio. organische Social-Impressions wurden bis Ende 2026 erzielt',
+        shortTitle: 'Organische Social-Impressions',
         weight: 3,
         krType: 'numeric_increase',
         current: '468 Mio.',
@@ -272,6 +285,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Organischer Website-Traffic wurde um 40 % gesteigert',
+        shortTitle: 'Organischer Website-Traffic',
         weight: 4,
         krType: 'numeric_increase',
         current: '36.000',
@@ -295,6 +309,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: '40.000 neue Newsletter-Abonnenten wurden akquiriert',
+        shortTitle: 'Newsletter-Wachstum',
         weight: 7,
         krType: 'numeric_increase',
         current: '15.000',
@@ -321,11 +336,13 @@ export function seedH2_2026(): Objective[] {
 
   const o4 = okr(
     'Das Marketing arbeitet datengetrieben, effizient und skalierbar. — Das ist die interne Optimierung.',
+    'Datengetriebenes Marketing',
     12,
     'IT / KI',
     [
       kr({
         text: 'Website-Relaunch erfolgreich abschließen',
+        shortTitle: 'Website-Relaunch',
         weight: 3,
         krType: 'milestone',
         current: 'Phase 2 / 4',
@@ -348,6 +365,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: '2 weitere Revenue Streams wurden erfolgreich am Markt platziert',
+        shortTitle: 'Neue Revenue Streams',
         weight: 4,
         krType: 'milestone',
         current: '1 / 2',
@@ -369,6 +387,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Loyalty Programm wurde vollständig ausgerollt',
+        shortTitle: 'Loyalty-Programm',
         weight: 4,
         krType: 'milestone',
         current: 'Konzeptphase',
@@ -391,6 +410,7 @@ export function seedH2_2026(): Objective[] {
       }),
       kr({
         text: 'Die Abstimmung zwischen MKT, IT, KI, Buchhaltung, Support und Prod wurde deutlich verbessert',
+        shortTitle: 'Abteilungs-Abstimmung',
         weight: 1,
         krType: 'milestone',
         current: '—',

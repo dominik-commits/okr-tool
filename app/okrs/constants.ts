@@ -34,8 +34,13 @@ export const STATUS_LABEL: Record<StatusValue, string> = {
   on: 'On Track',
   risk: 'At Risk',
   off: 'Off Track',
-  nodata: 'No Data',
+  needs_update: 'Needs Update',
+  not_started: 'Not Started',
 };
+
+/** Priority order for surfacing problems: worst first. */
+export const ATTENTION_STATUS_ORDER: StatusValue[] = ['off', 'risk', 'needs_update'];
+export const MAX_ATTENTION_ITEMS = 5;
 
 export const CONFIDENCE_OPTIONS: Confidence[] = ['High', 'Medium', 'Low'];
 
