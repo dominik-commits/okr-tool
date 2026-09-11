@@ -28,7 +28,12 @@ export default function Header({ activeNav, showTopControls, activeCycle, onCycl
   return (
     <div className={styles.header}>
       <div className={styles.headerLeft}>
-        <span className={styles.brand}>OKR Command Center</span>
+        <div className={styles.appTabs}>
+          <Link href="/" className={styles.appTab}>
+            Zeitstrahl
+          </Link>
+          <span className={`${styles.appTab} ${styles.appTabActive}`}>OKR Command Center</span>
+        </div>
         <nav className={styles.nav}>
           {NAV_ITEMS.map((item) => {
             const href = NAV_HREF[item];
