@@ -405,7 +405,7 @@ function headerHtml(){
     <div class="hrow months"><div class="corner"></div><div class="cells" style="width:${W}px">${m}</div></div>`;
   if(w) rows += `<div class="hrow"><div class="corner">Kalenderwoche</div><div class="cells" style="width:${W}px">${w}</div></div>`;
   if(ppd>=16){
-    for(let i=0;i<TOTAL_DAYS;i++){ const dt=new Date(START.getTime()+i*MS); const we=dt.getDay()===0||dt.getDay()===6;
+    for(let i=0;i<TOTAL_DAYS;i++){ const dt=new Date(2026,8,1+i); const we=dt.getDay()===0||dt.getDay()===6;
       d+=`<div class="hcell d ${we?'we':''}" style="left:${i*ppd}px;width:${ppd}px">${dt.getDate()}</div>`; }
     rows += `<div class="hrow"><div class="corner">Tag</div><div class="cells" style="width:${W}px">${d}</div></div>`;
   }
@@ -416,7 +416,7 @@ function bgHtml(){
   let h='';
   monthsList().forEach(([y,mo],i)=>{ const s=fmtISO(new Date(y,mo,1)), n=new Date(y,mo+1,0).getDate();
     h+=`<div class="mstripe ${i%2?'odd':''}" style="left:${dayIdx(s)*ppd}px;width:${n*ppd}px"></div>`; });
-  if(ppd>=4){ for(let i=0;i<TOTAL_DAYS;i++){ const dt=new Date(START.getTime()+i*MS), dw=dt.getDay();
+  if(ppd>=4){ for(let i=0;i<TOTAL_DAYS;i++){ const dt=new Date(2026,8,1+i), dw=dt.getDay();
       if(dw===6){ h+=`<div class="we" style="left:${i*ppd}px;width:${Math.min(2,TOTAL_DAYS-i)*ppd}px"></div>`; } else if(dw===0&&i===0){ h+=`<div class="we" style="left:0;width:${ppd}px"></div>`; } } }
   HOLIDAYS.forEach(([d,n,sc])=>{ h+=`<div class="hol ${sc}" style="left:${dayIdx(d)*ppd}px;width:${Math.max(ppd,2)}px"></div>`; });
   BLACK.forEach(b=>{ h+=`<div class="bw" style="left:${dayIdx(b.s)*ppd}px;width:${(dayIdx(b.e)-dayIdx(b.s)+1)*ppd}px"></div>`;
