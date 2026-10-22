@@ -45,6 +45,9 @@
   .chip i{width:9px;height:9px;border-radius:3px;display:inline-block;}
   .chip.on{color:var(--text);background:var(--panel-2);}
   .chip:not(.on) i{opacity:.35;}
+  .flbl{font-size:12px;color:var(--muted);}
+  .sel{background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12.5px;max-width:190px;}
+  .sel.active{border-color:var(--accent);color:var(--accent);}
   .zoomlbl{font-size:12px;color:var(--muted);min-width:58px;text-align:center;}
   .stats{font-size:12.5px;color:var(--muted);}
   .stats b{color:var(--text);font-weight:500;}
@@ -186,7 +189,7 @@
     <button class="btn icon" id="zoomIn" title="Reinzoomen (Strg + Mausrad) – oder Klick auf einen Monatsnamen">+</button>
     <button class="btn" id="zoomReset" style="display:none">← Gesamtansicht</button>
   </div>
-  <div class="group" id="chips"></div>
+  <div class="group"><label class="flbl" for="ownerFilter">Verantwortlich</label><select id="ownerFilter" class="sel"></select><span class="sep"></span><div class="group" id="chips"></div></div>
 </div>
 <div class="stats" id="stats"></div>
 
@@ -472,8 +475,21 @@ function specialExtra(){
   return h;
 }
 
+let ownerFilter='';  try{ ownerFilter=localStorage.getItem('planungskompass-owner')||''; }catch(e){}
+const NO_OWNER='__none__';
+function visibleItems(){ // Ferien/Sonderzeiträume bleiben immer sichtbar
+  if(!ownerFilter) return state.vacations;
+  return state.vacations.filter(v=>v.type==='vacation' || (ownerFilter===NO_OWNER ? !v.owner : v.owner===ownerFilter));
+}
+function renderOwnerSelect(){
+  const owners=[...new Set(state.vacations.map(v=>v.owner).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'de'));
+  if(ownerFilter && ownerFilter!==NO_OWNER && !owners.includes(ownerFilter)) ownerFilter='';
+  const sel=$('#ownerFilter');
+  sel.innerHTML=`<option value="">Alle</option>`+owners.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')+`<option value="${NO_OWNER}">Ohne Verantwortlichen</option>`;
+  sel.value=ownerFilter; sel.classList.toggle('active',!!ownerFilter);
+}
 function render(){
-  const vis = state.vacations;
+  const vis = visibleItems();
   let body='';
   // Sonderzeiträume
   const sp = groupHtml('special','Sonderzeiträume & Feiertage','#5E7A94', vis.filter(v=>v.type==='vacation'), 28);
@@ -492,11 +508,11 @@ function render(){
   if(t>=START&&t<=END){ const cells=board.querySelector('.hdr .hrow .cells');
     if(cells){ const l=document.createElement('div'); l.className='todaylbl'; l.textContent='Heute';
       l.style.left=(Math.round((t-START)/MS)*ppd+1)+'px'; l.style.top='0'; cells.appendChild(l); } }
-  renderStats(); renderChips();
+  renderStats(); renderChips(); renderOwnerSelect();
 }
 
 function renderStats(){
-  const real = state.vacations.filter(v=>v.type!=='vacation');
+  const real = visibleItems().filter(v=>v.type!=='vacation');
   const c=t=>real.filter(v=>v.type===t).length;
   // Überschneidungen: Paare innerhalb desselben Bereichs & derselben Ebene
   let ov=0; for(let i=0;i<real.length;i++)for(let j=i+1;j<real.length;j++){ const a=real[i],b=real[j];
@@ -520,6 +536,7 @@ board.addEventListener('mousemove',e=>{
 board.addEventListener('mouseleave',()=>tip.style.opacity=0);
 
 /* ================= Interaktion: Zoom, Klicks ================= */
+$('#ownerFilter').onchange=e=>{ ownerFilter=e.target.value; try{localStorage.setItem('planungskompass-owner',ownerFilter);}catch(err){} const sl=scroller.scrollLeft; render(); scroller.scrollLeft=sl; };
 $('#zoomIn').onclick=()=>stepZoom(1);
 $('#zoomOut').onclick=()=>stepZoom(-1);
 $('#zoomReset').onclick=()=>{ ppd=minPpd(); render(); scroller.scrollLeft=0; syncUi(); };
