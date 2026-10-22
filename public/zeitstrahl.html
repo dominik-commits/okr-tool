@@ -444,7 +444,7 @@ function itemHtml(v, top, trackH, col){
   const st = v.status || 'umsetzung', h = L.h, y = top + Math.round((trackH-h)/2);
   const showDt = w>=190, showTx = w>=44;
   const done = st==='abgeschlossen' ? '✓ ' : '';
-  const ct = v.type==='l1'||v.area==='kampagnen' ? (v.campType?` · ${CT_SHORT[v.campType]}`:'') : '';
+  const ct = v.type==='l1' && v.campType ? ` · ${CT_SHORT[v.campType]}` : '';
   const cls = ['item', ['l1','l2','l3','l4'].includes(v.type)?v.type:'', 's-'+st, v.id===selId?'sel':''].join(' ');
   return `<div class="${cls}" data-id="${v.id}" style="left:${l}px;top:${y}px;width:${w}px;height:${h}px;--c:${col}">
     <span class="ic">${done?'✓':L.icon}</span>${showTx?`<span class="tx">${esc(v.label)}${ct&&w>150?`<span class="dt">${ct}</span>`:''}</span>`:''}${showDt?`<span class="dt">${fmtShort(v.start)}–${fmtShort(v.end)}${v.owner&&w>=270?' · '+esc(v.owner):''}</span>`:''}<span class="rh l" data-h="l"></span><span class="rh r" data-h="r"></span></div>`;
@@ -530,7 +530,7 @@ board.addEventListener('mousemove',e=>{
   const it=e.target.closest('.item'); if(!it||dragInfo){tip.style.opacity=0;return;}
   const v=state.vacations.find(x=>x.id===it.dataset.id); if(!v)return;
   const a=areaOf(v), L=LEVELS[v.type]||LEVELS.project, days=dayIdx(v.end)-dayIdx(v.start)+1;
-  tip.innerHTML=`<b>${esc(v.label)}</b><div class="m">${L.icon} ${L.label}${v.type!=='vacation'?' · '+esc(a.label):''}${v.campType?' · '+CAMP_TYPES[v.campType]:''}</div>
+  tip.innerHTML=`<b>${esc(v.label)}</b><div class="m">${L.icon} ${L.label}${v.type!=='vacation'?' · '+esc(a.label):''}${v.type==='l1'&&v.campType?' · '+CAMP_TYPES[v.campType]:''}</div>
     <div>${fmtDE(v.start)} – ${fmtDE(v.end)} · ${days} Tage</div><div class="m">${v.type!=='vacation'?'Status: '+STATUS[v.status||'umsetzung']:''}${v.owner?(v.type!=='vacation'?' · ':'')+'Verantwortlich: '+esc(v.owner):''}</div>`;
   tip.style.opacity=1; tip.style.left=Math.min(e.clientX+14,innerWidth-280)+'px'; tip.style.top=(e.clientY+16)+'px';
 });
@@ -611,7 +611,7 @@ function syncForm(){
   const t=ft.value, isVac=t==='vacation';
   $('#areaWrap').style.display = isVac?'none':'';
   $('#stWrap').style.display = isVac?'none':'';
-  $('#ctWrap').style.display = (!isVac && $('#fArea').value==='kampagnen') ? '' : 'none';
+  $('#ctWrap').style.display = (t==='l1' && $('#fArea').value==='kampagnen') ? '' : 'none';
 }
 $('#fType').onchange=syncForm; $('#fArea').onchange=syncForm;
 function openDrawer(id, preset){
@@ -639,7 +639,7 @@ $('#dSave').onclick=()=>{
   if(toDate(start)>toDate(end)){err.textContent='Start muss vor dem Ende liegen.';return;}
   if(toDate(start)<START||toDate(end)>END){err.textContent='Bitte im Zeitraum Sep 2026 – Dez 2027 bleiben.';return;}
   const area = type==='vacation' ? '' : $('#fArea').value;
-  const data={type,label,start,end,area:area||undefined,campType:(area==='kampagnen'&&$('#fCt').value)||undefined,
+  const data={type,label,start,end,area:area||undefined,campType:(type==='l1'&&area==='kampagnen'&&$('#fCt').value)||undefined,
               status:type==='vacation'?undefined:$('#fStatus').value,note:$('#fNote').value.trim()||undefined,owner:$('#fOwner').value.trim()||undefined};
   if(editId){ const v=state.vacations.find(x=>x.id===editId); ['type','label','start','end','area','campType','status','note','owner'].forEach(k=>delete v[k]); Object.assign(v,data); }
   else state.vacations.push({id:uid(),...data});
