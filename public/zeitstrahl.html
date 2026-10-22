@@ -206,6 +206,7 @@
 <aside id="drawer" aria-hidden="true">
   <header><h2 id="dTitle">Eintrag erstellen</h2><button class="btn icon" id="dClose">×</button></header>
   <div class="body">
+    <div class="f" id="areaWrap"><label for="fArea">Bereich</label><select id="fArea"></select></div>
     <div class="f"><label for="fType">Art / Ebene</label>
       <select id="fType">
         <option value="l1">⚑ L1 – Kampagne</option>
@@ -216,7 +217,6 @@
         <option value="vacation">Ferien / Sonderzeitraum</option>
       </select></div>
     <div class="f"><label for="fLabel">Bezeichnung</label><input id="fLabel" type="text" maxlength="60" placeholder="z. B. Indizes Bundling"></div>
-    <div class="f" id="areaWrap"><label for="fArea">Bereich</label><select id="fArea"></select></div>
     <div class="f" id="ctWrap"><label for="fCt">Kampagnentyp</label>
       <select id="fCt">
         <option value="">– nicht festgelegt –</option>
@@ -313,6 +313,7 @@ let rawExtra = {};            // unbekannte Top-Level-Felder bleiben erhalten
 let loadedOk = false;         // nie speichern, bevor erfolgreich geladen wurde
 function setStatus(m){$('#status').textContent=m;}
 function migrate(v){          // Altdaten (Status/Kategorie der Vorversion) auf das neue Modell abbilden
+  if(v.type==='l1' && !v.area && !v.category) v.area='kampagnen';
   if(OLD_STATUS[v.status]) v.status=OLD_STATUS[v.status];
   if(v.category && !v.area && OLD_CAT[v.category]){ v.area=OLD_CAT[v.category][0]; if(OLD_CAT[v.category][1]) v.campType=OLD_CAT[v.category][1]; }
   return v;
@@ -604,7 +605,10 @@ let editId=null;
 const drawer=$('#drawer');
 $('#fArea').innerHTML = `<option value="">– nicht zugeordnet –</option>`+AREAS.map(a=>`<option value="${a.id}">${esc(a.label)}</option>`).join('');
 function syncForm(){
-  const t=$('#fType').value, isVac=t==='vacation';
+  const ft=$('#fType'), l1=[...ft.options].find(o=>o.value==='l1'), l1ok=$('#fArea').value==='kampagnen';
+  l1.disabled=!l1ok; l1.textContent=l1ok?'⚑ L1 – Kampagne':'⚑ L1 – Kampagne (nur im Bereich Kampagnen)';
+  if(!l1ok && ft.value==='l1') ft.value='l2';
+  const t=ft.value, isVac=t==='vacation';
   $('#areaWrap').style.display = isVac?'none':'';
   $('#stWrap').style.display = isVac?'none':'';
   $('#ctWrap').style.display = (!isVac && $('#fArea').value==='kampagnen') ? '' : 'none';
@@ -614,8 +618,8 @@ function openDrawer(id, preset){
   editId=id||null; selId=id||null;
   const v=id?state.vacations.find(x=>x.id===id):null;
   $('#dTitle').textContent = v?'Eintrag bearbeiten':'Eintrag erstellen';
-  $('#fType').value=v?v.type:(preset&&preset.type)||'l1';
-  $('#fLabel').value=v?v.label:''; $('#fArea').value=v?(v.area||''):'';
+  $('#fType').value=v?v.type:(preset&&preset.type)||'l2';
+  $('#fLabel').value=v?v.label:''; $('#fArea').value=v?(v.area||(v.type==='l1'?'kampagnen':'')):'';
   $('#fCt').value=v?(v.campType||''):''; $('#fStart').value=v?v.start:(preset&&preset.start)||''; $('#fEnd').value=v?v.end:(preset&&preset.end)||'';
   $('#fStatus').value=v?(v.status||'umsetzung'):'geplant'; $('#fNote').value=v?(v.note||''):''; $('#fOwner').value=v?(v.owner||''):'';
   $('#ownerList').innerHTML=[...new Set(state.vacations.map(x=>x.owner).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join('');
