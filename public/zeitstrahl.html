@@ -89,7 +89,7 @@
 
   .grow{display:flex;position:relative;z-index:2;border-bottom:1px solid var(--border);}
   .lbl{position:sticky;left:0;z-index:10;width:var(--lblw);flex:none;background:var(--panel);border-right:1px solid var(--border);
-       padding:8px 12px;display:flex;gap:8px;align-items:flex-start;}
+       padding:12px 12px;display:flex;gap:8px;align-items:flex-start;line-height:1.3;}
   .lbl.head{cursor:pointer;user-select:none;}
   .lbl.head:hover{background:var(--panel-2);}
   .lbl .sw{width:10px;height:10px;border-radius:3px;margin-top:4px;flex:none;}
@@ -111,7 +111,7 @@
   .item .dt{opacity:.65;font-size:11px;margin-left:2px;}
   .item.l1{font-weight:600;font-size:13px;background:color-mix(in srgb,var(--c) 42%,transparent);}
   .item.l2{font-weight:500;}
-  .item.l4{font-size:11px;padding:0 5px;}
+  .item.l4{font-size:11.5px;padding:0 6px;}
   .item.s-idee{border-style:dotted;background:transparent;}
   .item.s-geplant{border-style:dashed;background:color-mix(in srgb,var(--c) 14%,transparent);}
   .item.s-umsetzung{border-style:solid;}
@@ -261,12 +261,12 @@ const AREAS = [   // weitere Bereiche: einfach eine Zeile ergänzen
 ];
 const UNASSIGNED = {id:'none', label:'Nicht zugeordnet', color:'#8A93A1'};
 const LEVELS = {
-  l1:{label:'Kampagne',   icon:'⚑', h:26},
-  l2:{label:'Initiative', icon:'◆', h:22},
-  l3:{label:'Aktion',     icon:'⚡', h:19},
-  l4:{label:'Maßnahme',   icon:'●', h:15},
-  project:{label:'Projekt', icon:'▣', h:22},
-  vacation:{label:'Ferien / Sonderzeitraum', icon:'☼', h:22},
+  l1:{label:'Kampagne',   icon:'⚑', h:30},
+  l2:{label:'Initiative', icon:'◆', h:26},
+  l3:{label:'Aktion',     icon:'⚡', h:23},
+  l4:{label:'Maßnahme',   icon:'●', h:20},
+  project:{label:'Projekt', icon:'▣', h:26},
+  vacation:{label:'Ferien / Sonderzeitraum', icon:'☼', h:26},
 };
 const STATUS = {idee:'Idee', geplant:'Geplant', umsetzung:'In Umsetzung', blockiert:'Blockiert', abgeschlossen:'Abgeschlossen', abgesagt:'Abgesagt / pausiert'};
 const CAMP_TYPES = {umsatz:'Umsatzkampagne', kommunikation:'Kommunikationskampagne', reichweite:'Reichweitenkampagne'};
@@ -451,9 +451,10 @@ function itemHtml(v, top, trackH, col){
 }
 
 function groupHtml(key, label, color, items, extraTop){
-  const W=totalW(), isCol=collapsed.has(key), TH=30, n=items.length;
+  const W=totalW(), isCol=collapsed.has(key), TH=36, n=items.length;
   const {of,count}=lanes(items), pad=extraTop||0;
-  const laneH = isCol ? Math.max(34,pad+8) : pad + count*TH + 8;
+  const minH = key==='special' ? 84 : 64; // Platz für Bereichsname + Anzahl
+  const laneH = Math.max(minH, isCol ? pad+8 : pad + count*TH + 14);
   let inner='';
   if(!isCol) inner = items.map(v=>itemHtml(v, pad+4+(of[v.id]||0)*TH-4+4, TH, color)).join('');
   if(!n && !isCol && key!=='special') inner = `<span class="empty">Noch keine Einträge</span>`;
@@ -465,8 +466,10 @@ function groupHtml(key, label, color, items, extraTop){
 
 function specialExtra(){
   let h='';
+  const hEnds=[-1e9,-1e9]; // zwei Zeilen für Feiertagsnamen, damit sich nahe Tage nicht überlagern
   HOLIDAYS.forEach(([d,n,sc])=>{ h+=`<div class="tick ${sc==='land'?'land':''}" data-n="${esc(n)}${sc==='land'?' (nicht bundesweit)':''} · ${fmtDE(d)}" style="left:${dayIdx(d)*ppd}px;top:7px;height:14px;width:${Math.max(3,ppd*0.6)}px"></div>`;
-    if(ppd>=40) h+=`<span class="hname ${sc}" style="left:${dayIdx(d)*ppd+ppd*0.6+6}px">${esc(n)}</span>`; });
+    if(ppd>=40){ const lx=dayIdx(d)*ppd+ppd*0.6+6, row=hEnds[0]<lx?0:(hEnds[1]<lx?1:-1);
+      if(row>=0){ hEnds[row]=lx+n.length*6.4+8; h+=`<span class="hname ${sc}" style="left:${lx}px;top:${row?21:6}px">${esc(n)}</span>`; } } });
   BLACK.forEach(b=>{
     h+=`<div class="tick bf" data-n="Black Week · ${fmtDE(b.s)}–${fmtDE(b.e)}" style="left:${dayIdx(b.s)*ppd}px;top:7px;height:14px;width:${(dayIdx(b.e)-dayIdx(b.s)+1)*ppd}px;opacity:.75"></div>`;
     h+=`<div class="tick bf" data-n="Black Friday · ${fmtDE(b.bf)}" style="left:${dayIdx(b.bf)*ppd}px;top:7px;height:14px;width:${Math.max(3,ppd*0.6)}px"></div>`;
