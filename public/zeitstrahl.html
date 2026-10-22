@@ -48,13 +48,36 @@
   .flbl{font-size:12px;color:var(--muted);}
   .sel{background:var(--panel-2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:5px 8px;font-family:inherit;font-size:12.5px;max-width:190px;}
   .sel.active{border-color:var(--accent);color:var(--accent);}
+  #ice{flex:none;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 14px 12px;max-height:230px;display:flex;flex-direction:column;}
+  .ihead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;}
+  .ihead h3{margin:0;font-size:13.5px;font-weight:600;}
+  .ihead h3 span{color:var(--muted);font-weight:400;margin-left:4px;}
+  .ihint{font-size:12px;color:var(--muted);}
+  .itoggle{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 4px;transition:transform .15s;}
+  #ice.collapsed .itoggle{transform:rotate(-90deg);} #ice.collapsed #iceList{display:none;} #ice.collapsed .ihead{margin-bottom:0;}
+  .iadd{margin-left:auto;display:flex;gap:6px;} .iadd input{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:6px 10px;font-family:inherit;font-size:13px;width:260px;}
+  .iadd input:focus{outline:1px solid var(--accent);}
+  #iceList{display:flex;flex-wrap:wrap;gap:8px;overflow:auto;align-content:flex-start;}
+  .icard{position:relative;width:210px;background:var(--panel-2);border:1px dashed var(--border);border-radius:8px;padding:8px 26px 8px 11px;cursor:grab;user-select:none;touch-action:none;transition:border-color .12s,transform .12s;}
+  .icard:hover{border-color:var(--muted);transform:translateY(-1px);}
+  .icard .it{font-size:13px;font-weight:600;line-height:1.3;}
+  .icard .im{font-size:11.5px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:6px;}
+  .icard .id{width:8px;height:8px;border-radius:2px;flex:none;}
+  .icard .in{font-size:11.5px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .icard .ix{position:absolute;top:4px;right:4px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;line-height:1;opacity:0;padding:2px 5px;border-radius:4px;}
+  .icard:hover .ix{opacity:1;} .icard .ix:hover{color:#E27A6C;}
+  .iempty{font-size:12.5px;color:#5d6672;padding:4px 0;}
+  .ghost{position:fixed;display:none;z-index:300;pointer-events:none;background:var(--panel-2);border:1px dashed var(--muted);border-radius:7px;padding:6px 10px;font-size:12.5px;box-shadow:0 8px 24px rgba(0,0,0,.5);max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ghost.ok{border-color:var(--accent);border-style:solid;}
+  .grow.drop{box-shadow:inset 0 0 0 2px var(--accent);}
+  .grow.drop .lane{background:rgba(76,148,140,.10);}
   .zoomlbl{font-size:12px;color:var(--muted);min-width:58px;text-align:center;}
   .stats{font-size:12.5px;color:var(--muted);}
   .stats b{color:var(--text);font-weight:500;}
   .sep{width:1px;height:20px;background:var(--border);margin:0 4px;}
 
   /* board */
-  #scroller{flex:1;min-height:300px;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;position:relative;}
+  #scroller{flex:1;min-height:260px;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;position:relative;}
   #board{position:relative;}
   .hdr{position:sticky;top:0;z-index:30;background:var(--panel);}
   .hrow{display:flex;height:24px;border-bottom:1px solid var(--border);}
@@ -195,6 +218,16 @@
 
 <div id="scroller"><div id="board"></div></div>
 
+<section id="ice">
+  <div class="ihead">
+    <button class="itoggle" id="iceToggle" title="Ein-/ausklappen">▾</button>
+    <h3>Nicht definiert · Icebox <span id="iceCount"></span></h3>
+    <span class="ihint">Karte auf den Zeitstrahl ziehen oder anklicken, um sie einzuplanen</span>
+    <div class="iadd"><input id="iceNew" type="text" maxlength="80" placeholder="Neue Idee in die Icebox legen …"><button class="btn" id="iceAdd">+ Idee</button></div>
+  </div>
+  <div id="iceList"></div>
+</section>
+
 <div class="foot">
   <span id="status">Lädt…</span>
   <button class="btn danger" id="resetBtn">Alle Einträge zurücksetzen</button>
@@ -244,6 +277,7 @@
   </div>
   <footer>
     <button class="btn primary" id="dSave">Speichern</button>
+    <button class="btn" id="dIce">In Icebox ablegen</button>
     <button class="btn" id="dDup" style="display:none">Duplizieren</button>
     <button class="btn danger" id="dDel" style="display:none">Löschen</button>
     <button class="btn" id="dCancel" style="margin-left:auto">Abbrechen</button>
@@ -305,7 +339,7 @@ function isoWeek(d){const t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.get
 const areaOf = v => AREAS.find(a=>a.id===v.area) || UNASSIGNED;
 
 /* ================= State & Speicher ================= */
-let state = {vacations:[], seeds:[]};
+let state = {vacations:[], seeds:[], icebox:[]};
 const PREF_KEY = 'planungskompass-view';
 const OLD_STATUS = {'Planned':'geplant','In Progress':'umsetzung','Blocked':'blockiert','Done':'abgeschlossen'};
 const OLD_CAT = {Umsatzkampagne:['kampagnen','umsatz'],Kommunikationskampagne:['kampagnen','kommunikation'],Reichweitenkampagne:['kampagnen','reichweite'],Infrastruktur:['infra',null]};
@@ -326,7 +360,7 @@ async function load(){
     const res=await fetch('/api/data',{cache:'no-store'});
     if(res.status===401){ location.href='/login'; return; }
     const data=await res.json(); const p=(data&&data.value)||{};
-    const {vacations,seeds,...rest}=p; rawExtra=rest;
+    const {vacations,seeds,icebox,...rest}=p; rawExtra=rest; state.icebox=Array.isArray(icebox)?icebox:[];
     state.vacations=(Array.isArray(vacations)?vacations:[]).map(migrate); state.seeds=Array.isArray(seeds)?seeds:[];
     loadedOk=true;
     state.vacations.forEach(v=>{ if(['Indizeswandel','Wandel B','Wandel Bundling'].includes(v.label)) v.label='Indizes Bundling'; });
@@ -340,7 +374,7 @@ function save(){
   setStatus('Speichert…'); clearTimeout(saveT);
   saveT=setTimeout(async()=>{
     try{
-      const res=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...rawExtra,vacations:state.vacations,seeds:state.seeds})});
+      const res=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...rawExtra,vacations:state.vacations,seeds:state.seeds,icebox:state.icebox})});
       if(res.status===401){ location.href='/login'; return; }
       setStatus(res.ok?'Gespeichert — geteilt mit allen':'Speichern fehlgeschlagen');
     }catch(e){ setStatus('Speichern fehlgeschlagen (Verbindung prüfen)'); }
@@ -512,7 +546,7 @@ function render(){
   if(t>=START&&t<=END){ const cells=board.querySelector('.hdr .hrow .cells');
     if(cells){ const l=document.createElement('div'); l.className='todaylbl'; l.textContent='Heute';
       l.style.left=(Math.round((t-START)/MS)*ppd+1)+'px'; l.style.top='0'; cells.appendChild(l); } }
-  renderStats(); renderChips(); renderOwnerSelect();
+  renderStats(); renderChips(); renderOwnerSelect(); renderIce();
 }
 
 function renderStats(){
@@ -521,7 +555,7 @@ function renderStats(){
   // Überschneidungen: Paare innerhalb desselben Bereichs & derselben Ebene
   let ov=0; for(let i=0;i<real.length;i++)for(let j=i+1;j<real.length;j++){ const a=real[i],b=real[j];
     if((a.area||'none')===(b.area||'none') && dayIdx(a.start)<=dayIdx(b.end)&&dayIdx(b.start)<=dayIdx(a.end)) ov++; }
-  $('#stats').innerHTML = `<b>${c('l1')}</b> Kampagnen · <b>${c('l2')}</b> Initiativen · <b>${c('l3')}</b> Aktionen · <b>${c('l4')}</b> Maßnahmen · <b>${state.vacations.filter(v=>v.type==='vacation').length}</b> Sonderzeit(en) · <b>${ov}</b> Überschneidungen im selben Bereich`;
+  $('#stats').innerHTML = `<b>${c('l1')}</b> Kampagnen · <b>${c('l2')}</b> Initiativen · <b>${c('l3')}</b> Aktionen · <b>${c('l4')}</b> Maßnahmen · <b>${state.vacations.filter(v=>v.type==='vacation').length}</b> Sonderzeit(en) · <b>${ov}</b> Überschneidungen im selben Bereich · <b>${iceVisible().length}</b> in der Icebox`;
 }
 function renderChips(){
   $('#chips').innerHTML = [...AREAS,UNASSIGNED].map(a=>`<button class="chip ${hidden.has(a.id)?'':'on'}" data-area="${a.id}"><i style="background:${a.color}"></i>${esc(a.label)}</button>`).join('');
@@ -604,7 +638,7 @@ board.addEventListener('pointerup',e=>{
 board.addEventListener('pointercancel',()=>{ if(dragInfo){ dragInfo=null; render(); } });
 
 /* ================= Drawer ================= */
-let editId=null;
+let editId=null, iceId=null, mode='new';
 const drawer=$('#drawer');
 $('#fArea').innerHTML = `<option value="">– nicht zugeordnet –</option>`+AREAS.map(a=>`<option value="${a.id}">${esc(a.label)}</option>`).join('');
 function syncForm(){
@@ -617,42 +651,125 @@ function syncForm(){
   $('#ctWrap').style.display = (t==='l1' && $('#fArea').value==='kampagnen') ? '' : 'none';
 }
 $('#fType').onchange=syncForm; $('#fArea').onchange=syncForm;
-function openDrawer(id, preset){
-  editId=id||null; selId=id||null;
-  const v=id?state.vacations.find(x=>x.id===id):null;
-  $('#dTitle').textContent = v?'Eintrag bearbeiten':'Eintrag erstellen';
-  $('#fType').value=v?v.type:(preset&&preset.type)||'l2';
-  $('#fLabel').value=v?v.label:''; $('#fArea').value=v?(v.area||(v.type==='l1'?'kampagnen':'')):'';
-  $('#fCt').value=v?(v.campType||''):''; $('#fStart').value=v?v.start:(preset&&preset.start)||''; $('#fEnd').value=v?v.end:(preset&&preset.end)||'';
-  $('#fStatus').value=v?(v.status||'umsetzung'):'geplant'; $('#fNote').value=v?(v.note||''):''; $('#fOwner').value=v?(v.owner||''):'';
-  $('#ownerList').innerHTML=[...new Set(state.vacations.map(x=>x.owner).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join('');
-  $('#fErr').textContent=''; $('#dDup').style.display=v?'':'none'; $('#dDel').style.display=v?'':'none';
-  $('#fMeta').textContent = v ? `Dauer: ${dayIdx(v.end)-dayIdx(v.start)+1} Tage` : '';
-  syncForm(); drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false');
+function setMode(m){
+  mode=m;
+  $('#dTitle').textContent = m==='edit'?'Eintrag bearbeiten':m==='ice'?'Idee einplanen':'Eintrag erstellen';
+  $('#dSave').textContent = m==='ice'?'In Zeitstrahl übernehmen':'Speichern';
+  $('#dIce').textContent = m==='ice'?'Als Idee speichern':(m==='edit'?'In Icebox verschieben':'In Icebox ablegen');
+  $('#dDup').style.display = m==='edit'?'':'none';
+  $('#dDel').style.display = m==='new'?'none':''; $('#dDel').textContent = m==='ice'?'Idee löschen':'Löschen';
+}
+function showDrawer(){
+  $('#ownerList').innerHTML=[...new Set([...state.vacations,...state.icebox].map(x=>x.owner).filter(Boolean))].map(o=>`<option value="${esc(o)}">`).join('');
+  $('#fErr').textContent=''; syncForm(); drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false');
   const sl=scroller.scrollLeft; render(); scroller.scrollLeft=sl; setTimeout(()=>$('#fLabel').focus(),180);
 }
-function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); selId=null; editId=null; const sl=scroller.scrollLeft; render(); scroller.scrollLeft=sl; }
+function openDrawer(id, preset){
+  preset=preset||{}; iceId=null; editId=id||null; selId=id||null;
+  const v=id?state.vacations.find(x=>x.id===id):null;
+  setMode(v?'edit':'new');
+  $('#fType').value=v?v.type:preset.type||'l2';
+  $('#fLabel').value=v?v.label:''; $('#fArea').value=v?(v.area||(v.type==='l1'?'kampagnen':'')):'';
+  $('#fCt').value=v?(v.campType||''):''; $('#fStart').value=v?v.start:preset.start||''; $('#fEnd').value=v?v.end:preset.end||'';
+  $('#fStatus').value=v?(v.status||'umsetzung'):'geplant'; $('#fNote').value=v?(v.note||''):''; $('#fOwner').value=v?(v.owner||''):'';
+  $('#fMeta').textContent = v ? `Dauer: ${dayIdx(v.end)-dayIdx(v.start)+1} Tage` : '';
+  showDrawer();
+}
+function openIce(id, preset){ // Idee aus der Icebox einplanen
+  preset=preset||{}; const it=state.icebox.find(x=>x.id===id); if(!it) return;
+  editId=null; selId=null; iceId=id; setMode('ice');
+  $('#fArea').value=preset.area||it.area||''; $('#fType').value=it.type||'l2';
+  $('#fLabel').value=it.label; $('#fCt').value=it.campType||'';
+  $('#fStart').value=preset.start||''; $('#fEnd').value=preset.end||'';
+  $('#fStatus').value=it.status||'geplant'; $('#fNote').value=it.note||''; $('#fOwner').value=it.owner||'';
+  $('#fMeta').textContent='Idee aus der Icebox: Ebene und Zeitraum festlegen und übernehmen – oder weiter als Idee speichern.';
+  showDrawer();
+}
+function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); selId=null; editId=null; iceId=null; const sl=scroller.scrollLeft; render(); scroller.scrollLeft=sl; }
 $('#newBtn').onclick=()=>openDrawer(null);
-$('#logoutBtn').onclick=async()=>{ await fetch('/api/logout',{method:'POST'}); location.href='/login'; };
+if($('#logoutBtn')) $('#logoutBtn').onclick=async()=>{ await fetch('/api/logout',{method:'POST'}); location.href='/login'; };
 $('#dClose').onclick=$('#dCancel').onclick=closeDrawer;
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeDrawer(); $('#legend').style.display='none'; } });
+function formData(){
+  const type=$('#fType').value, area=type==='vacation'?'':$('#fArea').value;
+  return {type,label:$('#fLabel').value.trim(),area:area||undefined,campType:(type==='l1'&&area==='kampagnen'&&$('#fCt').value)||undefined,
+          status:type==='vacation'?undefined:$('#fStatus').value,note:$('#fNote').value.trim()||undefined,owner:$('#fOwner').value.trim()||undefined};
+}
 $('#dSave').onclick=()=>{
-  const type=$('#fType').value, label=$('#fLabel').value.trim(), start=$('#fStart').value, end=$('#fEnd').value, err=$('#fErr');
-  if(!label||!start||!end){err.textContent='Bitte Bezeichnung, Start und Ende ausfüllen.';return;}
+  const d=formData(), start=$('#fStart').value, end=$('#fEnd').value, err=$('#fErr');
+  if(!d.label||!start||!end){err.textContent='Bitte Bezeichnung, Start und Ende ausfüllen.';return;}
   if(toDate(start)>toDate(end)){err.textContent='Start muss vor dem Ende liegen.';return;}
   if(toDate(start)<START||toDate(end)>END){err.textContent='Bitte im Zeitraum Sep 2026 – Dez 2027 bleiben.';return;}
-  const area = type==='vacation' ? '' : $('#fArea').value;
-  const data={type,label,start,end,area:area||undefined,campType:(type==='l1'&&area==='kampagnen'&&$('#fCt').value)||undefined,
-              status:type==='vacation'?undefined:$('#fStatus').value,note:$('#fNote').value.trim()||undefined,owner:$('#fOwner').value.trim()||undefined};
-  if(editId){ const v=state.vacations.find(x=>x.id===editId); ['type','label','start','end','area','campType','status','note','owner'].forEach(k=>delete v[k]); Object.assign(v,data); }
-  else state.vacations.push({id:uid(),...data});
+  const data={...d,start,end};
+  if(mode==='edit'){ const v=state.vacations.find(x=>x.id===editId); ['type','label','start','end','area','campType','status','note','owner'].forEach(k=>delete v[k]); Object.assign(v,data); }
+  else { state.vacations.push({id:iceId||uid(),...data}); if(iceId) state.icebox=state.icebox.filter(x=>x.id!==iceId); }
   state.vacations.sort((a,b)=>toDate(a.start)-toDate(b.start));
   save(); closeDrawer();
 };
-$('#dDel').onclick=()=>{ if(!editId||!confirm('Eintrag wirklich löschen?'))return; state.vacations=state.vacations.filter(v=>v.id!==editId); save(); closeDrawer(); };
+$('#dIce').onclick=()=>{ // als Idee in die Icebox (ohne Zeitraum)
+  const d=formData(); if(!d.label){ $('#fErr').textContent='Bitte eine Bezeichnung eingeben.'; return; }
+  Object.keys(d).forEach(k=>d[k]===undefined&&delete d[k]);
+  if(mode==='edit'){ state.vacations=state.vacations.filter(v=>v.id!==editId); state.icebox.push({id:editId,...d}); }
+  else if(mode==='ice'){ const i=state.icebox.findIndex(x=>x.id===iceId); state.icebox[i]={id:iceId,...d}; }
+  else state.icebox.push({id:uid(),...d});
+  save(); closeDrawer();
+};
+$('#dDel').onclick=()=>{
+  if(mode==='ice'){ if(!confirm('Idee wirklich löschen?'))return; state.icebox=state.icebox.filter(x=>x.id!==iceId); save(); closeDrawer(); return; }
+  if(!editId||!confirm('Eintrag wirklich löschen?'))return; state.vacations=state.vacations.filter(v=>v.id!==editId); save(); closeDrawer(); };
 $('#dDup').onclick=()=>{ const v=state.vacations.find(x=>x.id===editId); if(!v)return;
   const c={...v,id:uid(),label:v.label+' (Kopie)'}; state.vacations.push(c); save(); closeDrawer(); setTimeout(()=>openDrawer(c.id),50); };
-$('#resetBtn').onclick=()=>{ if(!confirm('Wirklich ALLE Einträge löschen?'))return; state.vacations=[]; state.seeds=['indizeswandel-project']; save(); render(); };
+$('#resetBtn').onclick=()=>{ if(!confirm('Wirklich ALLE Einträge und Ideen löschen?'))return; state.vacations=[]; state.icebox=[]; state.seeds=['indizeswandel-project']; save(); render(); };
+
+/* ================= Icebox ("Nicht definiert") ================= */
+function iceVisible(){ return !ownerFilter ? state.icebox : state.icebox.filter(i=> ownerFilter===NO_OWNER ? !i.owner : i.owner===ownerFilter); }
+function renderIce(){
+  const items=iceVisible(), all=state.icebox.length;
+  $('#iceCount').textContent = ownerFilter ? `${items.length} von ${all}` : String(all);
+  $('#iceList').innerHTML = items.length ? items.map(i=>{ const a=AREAS.find(x=>x.id===i.area);
+    return `<div class="icard" data-ice="${i.id}"><button class="ix" data-icedel="${i.id}" title="Idee löschen">×</button>
+      <div class="it">${esc(i.label)}</div>
+      <div class="im"><span class="id" style="background:${a?a.color:'#5d6672'}"></span>${a?esc(a.label):'Bereich offen'}${i.owner?' · '+esc(i.owner):''}</div>${i.note?`<div class="in">${esc(i.note)}</div>`:''}</div>`; }).join('')
+    : `<div class="iempty">${all?'Keine Ideen für diesen Filter.':'Noch keine Ideen. Oben eine Idee eintippen – später ziehst du sie auf den Zeitstrahl.'}</div>`;
+}
+function addIdea(){ const inp=$('#iceNew'), t=inp.value.trim(); if(!t) return; state.icebox.push({id:uid(),label:t}); inp.value=''; save(); renderIce(); }
+$('#iceAdd').onclick=addIdea; $('#iceNew').addEventListener('keydown',e=>{ if(e.key==='Enter') addIdea(); });
+$('#iceToggle').onclick=()=>{ $('#ice').classList.toggle('collapsed'); };
+$('#iceList').addEventListener('click',e=>{ const x=e.target.closest('[data-icedel]'); if(!x) return;
+  if(!confirm('Idee wirklich löschen?')) return; state.icebox=state.icebox.filter(i=>i.id!==x.dataset.icedel); save(); renderIce(); });
+
+// Drag & Drop: Karte auf den Zeitstrahl ziehen -> Drawer mit vorbelegtem Start/Bereich
+let iceDrag=null; const ghost=document.createElement('div'); ghost.className='ghost'; document.body.appendChild(ghost);
+function dropInfo(e){
+  const r=scroller.getBoundingClientRect(); if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom) return null;
+  const g=document.elementsFromPoint(e.clientX,e.clientY).map(n=>n.closest&&n.closest('.grow')).find(Boolean);
+  const day=Math.min(Math.max(Math.floor((e.clientX-r.left-LBL_W+scroller.scrollLeft)/ppd),0),TOTAL_DAYS-1);
+  const key=g?g.dataset.g:''; return {g,day,area:AREAS.some(a=>a.id===key)?key:'',r};
+}
+function clearDrop(){ document.querySelectorAll('.grow.drop').forEach(x=>x.classList.remove('drop')); }
+$('#iceList').addEventListener('pointerdown',e=>{
+  if(e.button!==0||e.target.closest('[data-icedel]')) return; const c=e.target.closest('[data-ice]'); if(!c) return;
+  iceDrag={id:c.dataset.ice,x0:e.clientX,y0:e.clientY,moved:false}; c.setPointerCapture(e.pointerId);
+});
+document.addEventListener('pointermove',e=>{
+  if(!iceDrag) return; const d=iceDrag;
+  if(!d.moved && Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6){ d.moved=true; ghost.style.display='block'; tip.style.opacity=0; }
+  if(!d.moved) return;
+  const it=state.icebox.find(x=>x.id===d.id), info=dropInfo(e);
+  ghost.style.left=(e.clientX+14)+'px'; ghost.style.top=(e.clientY+14)+'px';
+  clearDrop();
+  if(info){ if(info.g) info.g.classList.add('drop'); ghost.textContent=`${it?it.label:''} → ab ${fmtShort(addDays('2026-09-01',info.day))}`; ghost.classList.add('ok');
+    if(e.clientX<info.r.left+LBL_W+40) scroller.scrollLeft-=16; else if(e.clientX>info.r.right-40) scroller.scrollLeft+=16; }
+  else { ghost.textContent=it?it.label:''; ghost.classList.remove('ok'); }
+});
+function endIceDrag(e,cancel){
+  if(!iceDrag) return; const d=iceDrag; iceDrag=null; ghost.style.display='none'; ghost.classList.remove('ok'); clearDrop(); if(cancel) return;
+  if(!d.moved){ openIce(d.id); return; }
+  const info=dropInfo(e); if(!info) return;
+  const start=addDays('2026-09-01',info.day); let end=addDays(start,6); if(toDate(end)>END) end='2027-12-31';
+  openIce(d.id,{start,end,area:info.area});
+}
+document.addEventListener('pointerup',e=>endIceDrag(e,false)); document.addEventListener('pointercancel',e=>endIceDrag(e,true));
 
 /* ================= Legende ================= */
 $('#legendBtn').onclick=e=>{
